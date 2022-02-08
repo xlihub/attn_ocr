@@ -122,3 +122,26 @@ class PaddleClient:
         ret = self.client.predict(feed_dict={"image": image}, fetch=["res"])
         # print(ret.value)
         return ret
+
+class PaddleCHClient:
+    def __init__(self):
+        self.client = PipelineClient()
+        self.client.connect(['127.0.0.1:18092'])
+
+    def predict(self, img_base64):
+        image = utils.read_img_from_base64(img_base64, 'base64')
+        # img_dir = "/home/xli/ppocr/imgs/1/"
+        # if os.path.exists(img_dir):
+        #     print(os.path)
+        # else:
+        #     print(os.path.sys.prefix)
+        # for img_file in os.listdir(img_dir):
+        #     with open(os.path.join(img_dir, img_file), 'rb') as file:
+        #         image_data = file.read()
+        #     image = cv2_to_base64(image_data)
+        #
+        # results = {}
+        # for i in range(1):
+        ret = self.client.predict(feed_dict={"image": image}, fetch=["res"])
+        # print(ret.value)
+        return ret

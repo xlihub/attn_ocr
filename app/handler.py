@@ -7,7 +7,7 @@ from app.serving_client import BaseClient, AsyncClient, MaskRcnnClient
 from app.config import MODEL_URL, DEBUG
 from app.key_dicts import east_threshold, max_predict_size, ALPHABET
 import app.utils as utils
-from app.invoice_template.template import examples, tencent_name_transform
+from app.invoice_template.template import get_examples, tencent_name_transform
 from app.extractor.information_extraction import DataHandle
 from app.extractor.direction_filter_generator import get_direction_filter
 import math
@@ -52,7 +52,7 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 ##
-invoice_direction_filter = get_direction_filter(examples)
+invoice_direction_filter = get_direction_filter(get_examples())
 
 
 class OcrEngine(object):
@@ -412,12 +412,11 @@ def checkdata(im_type, im_dict):
 
 class PaddleOutputParser(object):
 
-    def __init__(self, inputs, predicts, type):
+    def __init__(self, inputs, predicts):
         # print("print(len(predicts)):",len(predicts))
         self.inputs = inputs
         self.predicts = predicts
         self.code = '200'
-        self.im_type = type
         self.response = []
 
     def _decode(self, expire=36000):
@@ -429,15 +428,94 @@ class PaddleOutputParser(object):
         return b64_secret
 
     def parse_output(self):
-        for i in range(len(self.predicts)):
-            self.fp_dict = {}
-            self.fp_dict['InvoiceType'] = self.im_type
-            self.fp_dict["InvoiceInfos"] = checkdata(self.im_type, {k: v for k, v in self.predicts[i].items() if
-                                                                         not k.startswith('__')})
-            self.fp_dict['RequestId'] = self._decode()
-            self.fp_dict['Code'] = self.code
-            self.fp_dict['Message'] = 'Success' if self.code == '200' else 'Error'
-            self.response.append(self.fp_dict)
-        # print("self.response: ",self.response)
+        self.fp_dict = {}
+        self.fp_dict['InvoiceType'] = self.predicts['im_type']
+        self.fp_dict["InvoiceExtra"] = self.predicts['extra']
+        self.fp_dict['RequestId'] = self._decode()
+        self.fp_dict['Code'] = self.code
+        self.fp_dict['Message'] = 'Success' if self.code == '200' else 'Error'
+        if len(self.predicts['result']):
+            for i in range(len(self.predicts['result'])):
+                self.fp_dict["InvoiceInfos"] = checkdata(self.predicts['im_type'], {k: v for k, v in self.predicts['result'][i].items() if
+                                                                             not k.startswith('__')})
+        else:
+            self.fp_dict["InvoiceInfos"] = []
+        self.response.append(self.fp_dict)
+        print("InvoiceInfos: ", self.fp_dict["InvoiceInfos"])
+        return self.response
+
+
+class PaddleMutiOutputParser(object):
+
+    def __init__(self, inputs, predicts):
+        # print("print(len(predicts)):",len(predicts))
+        self.inputs = inputs
+        self.predicts = predicts
+        self.code = '200'
+        self.response = []
+
+    def _decode(self, expire=36000):
+        ts_str = str(time.time() + expire)
+        ts_byte = ts_str.encode("utf-8")
+        sha1_str = hmac.new(self.code.encode("utf-8"), ts_byte, 'sha1').hexdigest()
+        secret = ts_str + ':' + sha1_str
+        b64_secret = base64.urlsafe_b64encode(secret.encode("utf-8")).decode("utf-8")
+        return b64_secret
+
+    def parse_output(self):
+        if len(self.predicts):
+            for i in range(len(self.predicts)):
+                self.fp_dict = {}
+                self.fp_dict['InvoiceType'] = self.predicts[i]['im_type']
+                self.fp_dict['InvoiceExtra'] = self.predicts[i]['extra']
+                self.fp_dict['RequestId'] = self._decode()
+                self.fp_dict['Code'] = self.code
+                self.fp_dict['Message'] = 'Success' if self.code == '200' else 'Error'
+                if self.predicts[i]:
+                    self.fp_dict["InvoiceInfos"] = checkdata(self.predicts[i]['im_type'], {k: v for k, v in self.predicts[i]['result'].items() if
+                                                                                 not k.startswith('__')})
+                else:
+                    self.fp_dict["InvoiceInfos"] = []
+                self.response.append(self.fp_dict)
+        """
+        else:
+            if self.im_type == 'unknown':
+                self.fp_dict = {}
+                self.fp_dict['InvoiceType'] = self.im_type
+                self.fp_dict["InvoiceInfos"] = []
+                self.fp_dict['RequestId'] = self._decode()
+                self.fp_dict['Code'] = self.code
+                self.fp_dict['Message'] = 'Success' if self.code == '200' else 'Error'
+                self.response.append(self.fp_dict)
+        """
+        print("InvoiceInfos: ", self.fp_dict["InvoiceInfos"])
+
+        return self.response
+
+class PaddleCHOutputParser(object):
+
+    def __init__(self, inputs, predicts):
+        # print("print(len(predicts)):",len(predicts))
+        self.inputs = inputs
+        self.predicts = predicts
+        self.code = '200'
+        self.response = []
+
+    def _decode(self, expire=36000):
+        ts_str = str(time.time() + expire)
+        ts_byte = ts_str.encode("utf-8")
+        sha1_str = hmac.new(self.code.encode("utf-8"), ts_byte, 'sha1').hexdigest()
+        secret = ts_str + ':' + sha1_str
+        b64_secret = base64.urlsafe_b64encode(secret.encode("utf-8")).decode("utf-8")
+        return b64_secret
+
+    def parse_output(self):
+        self.fp_dict = {}
+        self.fp_dict["InvoiceInfos"] = self.predicts
+        self.fp_dict['RequestId'] = self._decode()
+        self.fp_dict['Code'] = self.code
+        self.fp_dict['Message'] = 'Success' if self.code == '200' else 'Error'
+        self.response.append(self.fp_dict)
+        print("InvoiceInfos: ", self.fp_dict["InvoiceInfos"])
 
         return self.response

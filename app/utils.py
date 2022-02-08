@@ -234,20 +234,37 @@ def _cal_edge_length(points):
 def qrcode_dewarp(pil_img):
     qrcode_result = decode(pil_img)
     if qrcode_result:
-        points = [(i[0], i[1]) for i in qrcode_result[0][3]]
-        center, points = _cal_center_point(points)
-        length = _cal_edge_length(points)
-        half = int(length * 0.4)
-        dewarp_points = [(center[0] - half, center[1] - half),
-                         (center[0] - half, center[1] + half),
-                         (center[0] + half, center[1] + half),
-                         (center[0] + half, center[1] - half)]
-        M = cv2.getPerspectiveTransform(np.float32(points), np.float32(dewarp_points))
-        cv2_img = np.asarray(pil_img)
-        dst = cv2.warpPerspective(cv2_img, M, (cv2_img.shape[1], cv2_img.shape[0]))
-        return Image.fromarray(dst)
+        if len(qrcode_result) > 0:
+            results = []
+            index = 1
+            for result in qrcode_result:
+                data = result[0]
+                type = result[1]
+                res = data.decode('utf-8')
+                if type == 'QRCODE':
+                    type = 'QRCODE' + str(index)
+                results.append({type: res})
+                index += 1
+            return results
+        else:
+            return []
+            """
+            points = [(i[0], i[1]) for i in qrcode_result[0][3]]
+            center, points = _cal_center_point(points)
+            length = _cal_edge_length(points)
+            half = int(length * 0.4)
+            dewarp_points = [(center[0] - half, center[1] - half),
+                             (center[0] - half, center[1] + half),
+                             (center[0] + half, center[1] + half),
+                             (center[0] + half, center[1] - half)]
+            M = cv2.getPerspectiveTransform(np.float32(points), np.float32(dewarp_points))
+            cv2_img = np.asarray(pil_img)
+            dst = cv2.warpPerspective(cv2_img, M, (cv2_img.shape[1], cv2_img.shape[0]))
+            return Image.fromarray(dst)
+            """
     else:
-        return pil_img
+        return []
+        # return pil_img
 
 
 def debug(fn):

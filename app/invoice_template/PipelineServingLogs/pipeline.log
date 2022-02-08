@@ -1,0 +1,436 @@
+INFO 2021-12-14 17:56:56,947 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:56:56,948 [log.py:117] PRAGMA main.table_info("templates")
+INFO 2021-12-14 17:56:56,948 [log.py:117] [raw sql] ()
+INFO 2021-12-14 17:56:56,948 [log.py:117] COMMIT
+INFO 2021-12-14 17:56:56,948 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:56:56,948 [log.py:117] PRAGMA main.table_info("patterns")
+INFO 2021-12-14 17:56:56,948 [log.py:117] [raw sql] ()
+INFO 2021-12-14 17:56:56,948 [log.py:117] COMMIT
+INFO 2021-12-14 17:56:56,957 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:56:56,958 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 17:56:56,958 [log.py:117] [generated in 0.00010s] ()
+INFO 2021-12-14 17:56:56,959 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:56:56,960 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:56:56,960 [log.py:117] [generated in 0.00010s] ()
+INFO 2021-12-14 17:56:56,962 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:56:56,962 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 17:56:56,962 [log.py:117] [cached since 0.003894s ago] ()
+INFO 2021-12-14 17:56:56,963 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:56:56,963 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:56:56,963 [log.py:117] [cached since 0.003417s ago] ()
+INFO 2021-12-14 17:57:22,539 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:22,540 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:57:22,540 [log.py:117] [cached since 25.58s ago] ()
+INFO 2021-12-14 17:57:22,541 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:22,541 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:57:22,541 [log.py:117] [cached since 25.58s ago] ()
+INFO 2021-12-14 17:57:22,556 [core.py:1045] Executed callback '_prepare'
+INFO 2021-12-14 17:57:22,557 [core.py:128] Exited state prepare
+INFO 2021-12-14 17:57:22,557 [core.py:122] Entered state init
+INFO 2021-12-14 17:57:22,560 [core.py:1045] Executed callback '_anchor_progress'
+INFO 2021-12-14 17:57:22,564 [core.py:1045] Executed callback '_anchor_progress'
+INFO 2021-12-14 17:57:22,564 [core.py:128] Exited state init
+INFO 2021-12-14 17:57:22,564 [core.py:122] Entered state anchor_done
+INFO 2021-12-14 17:57:22,566 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:22,566 [core.py:128] Exited state anchor_done
+INFO 2021-12-14 17:57:22,566 [core.py:122] Entered state field_progress
+INFO 2021-12-14 17:57:22,568 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:22,569 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:22,569 [core.py:128] Exited state field_progress
+INFO 2021-12-14 17:57:22,569 [core.py:122] Entered state split_box
+INFO 2021-12-14 17:57:22,584 [core.py:1045] Executed callback '_split_box_prepare_again'
+INFO 2021-12-14 17:57:22,584 [core.py:128] Exited state split_box
+INFO 2021-12-14 17:57:22,584 [core.py:122] Entered state split_box_done
+INFO 2021-12-14 17:57:22,587 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:22,587 [core.py:128] Exited state split_box_done
+INFO 2021-12-14 17:57:22,587 [core.py:122] Entered state split_box_done
+INFO 2021-12-14 17:57:22,590 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:22,593 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:22,593 [core.py:128] Exited state split_box_done
+INFO 2021-12-14 17:57:22,593 [core.py:122] Entered state field_done
+INFO 2021-12-14 17:57:32,557 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:32,558 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates 
+WHERE templates.name = ?
+ LIMIT ? OFFSET ?
+INFO 2021-12-14 17:57:32,558 [log.py:117] [generated in 0.00013s] ('gppz', 1, 0)
+INFO 2021-12-14 17:57:32,559 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns 
+WHERE patterns.name = ?
+ LIMIT ? OFFSET ?
+INFO 2021-12-14 17:57:32,559 [log.py:117] [generated in 0.00010s] ('gppz', 1, 0)
+INFO 2021-12-14 17:57:32,560 [log.py:117] COMMIT
+INFO 2021-12-14 17:57:33,804 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:33,804 [log.py:117] PRAGMA main.table_info("templates")
+INFO 2021-12-14 17:57:33,804 [log.py:117] [raw sql] ()
+INFO 2021-12-14 17:57:33,805 [log.py:117] COMMIT
+INFO 2021-12-14 17:57:33,805 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:33,805 [log.py:117] PRAGMA main.table_info("patterns")
+INFO 2021-12-14 17:57:33,805 [log.py:117] [raw sql] ()
+INFO 2021-12-14 17:57:33,805 [log.py:117] COMMIT
+INFO 2021-12-14 17:57:33,814 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:33,815 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 17:57:33,815 [log.py:117] [generated in 0.00010s] ()
+INFO 2021-12-14 17:57:33,816 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:33,816 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:57:33,816 [log.py:117] [generated in 0.00009s] ()
+INFO 2021-12-14 17:57:33,819 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:33,819 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 17:57:33,819 [log.py:117] [cached since 0.003878s ago] ()
+INFO 2021-12-14 17:57:33,819 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:33,820 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:57:33,820 [log.py:117] [cached since 0.003376s ago] ()
+INFO 2021-12-14 17:57:44,368 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:44,368 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:57:44,368 [log.py:117] [cached since 10.55s ago] ()
+INFO 2021-12-14 17:57:44,369 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:44,369 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:57:44,369 [log.py:117] [cached since 10.55s ago] ()
+INFO 2021-12-14 17:57:44,384 [core.py:1045] Executed callback '_prepare'
+INFO 2021-12-14 17:57:44,385 [core.py:128] Exited state prepare
+INFO 2021-12-14 17:57:44,385 [core.py:122] Entered state init
+INFO 2021-12-14 17:57:44,388 [core.py:1045] Executed callback '_anchor_progress'
+INFO 2021-12-14 17:57:44,392 [core.py:1045] Executed callback '_anchor_progress'
+INFO 2021-12-14 17:57:44,392 [core.py:128] Exited state init
+INFO 2021-12-14 17:57:44,392 [core.py:122] Entered state anchor_done
+INFO 2021-12-14 17:57:44,394 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:44,394 [core.py:128] Exited state anchor_done
+INFO 2021-12-14 17:57:44,394 [core.py:122] Entered state field_progress
+INFO 2021-12-14 17:57:44,396 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:44,397 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:44,397 [core.py:128] Exited state field_progress
+INFO 2021-12-14 17:57:44,397 [core.py:122] Entered state split_box
+INFO 2021-12-14 17:57:44,414 [core.py:1045] Executed callback '_split_box_prepare_again'
+INFO 2021-12-14 17:57:44,414 [core.py:128] Exited state split_box
+INFO 2021-12-14 17:57:44,414 [core.py:122] Entered state split_box_done
+INFO 2021-12-14 17:57:44,417 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:44,417 [core.py:128] Exited state split_box_done
+INFO 2021-12-14 17:57:44,417 [core.py:122] Entered state split_box_done
+INFO 2021-12-14 17:57:44,420 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:44,423 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:44,423 [core.py:128] Exited state split_box_done
+INFO 2021-12-14 17:57:44,423 [core.py:122] Entered state field_done
+INFO 2021-12-14 17:57:48,945 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:48,946 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates 
+WHERE templates.name = ?
+ LIMIT ? OFFSET ?
+INFO 2021-12-14 17:57:48,946 [log.py:117] [generated in 0.00016s] ('gppz', 1, 0)
+INFO 2021-12-14 17:57:48,948 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns 
+WHERE patterns.name = ?
+ LIMIT ? OFFSET ?
+INFO 2021-12-14 17:57:48,948 [log.py:117] [generated in 0.00014s] ('gppz', 1, 0)
+INFO 2021-12-14 17:57:48,949 [log.py:117] COMMIT
+INFO 2021-12-14 17:57:50,224 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:50,225 [log.py:117] PRAGMA main.table_info("templates")
+INFO 2021-12-14 17:57:50,225 [log.py:117] [raw sql] ()
+INFO 2021-12-14 17:57:50,225 [log.py:117] COMMIT
+INFO 2021-12-14 17:57:50,225 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:50,225 [log.py:117] PRAGMA main.table_info("patterns")
+INFO 2021-12-14 17:57:50,225 [log.py:117] [raw sql] ()
+INFO 2021-12-14 17:57:50,225 [log.py:117] COMMIT
+INFO 2021-12-14 17:57:50,234 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:50,235 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 17:57:50,235 [log.py:117] [generated in 0.00010s] ()
+INFO 2021-12-14 17:57:50,236 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:50,236 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:57:50,237 [log.py:117] [generated in 0.00008s] ()
+INFO 2021-12-14 17:57:50,239 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:50,239 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 17:57:50,239 [log.py:117] [cached since 0.003811s ago] ()
+INFO 2021-12-14 17:57:50,240 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:50,240 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:57:50,240 [log.py:117] [cached since 0.003356s ago] ()
+INFO 2021-12-14 17:57:58,417 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:58,417 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:57:58,417 [log.py:117] [cached since 8.181s ago] ()
+INFO 2021-12-14 17:57:58,418 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:57:58,419 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:57:58,419 [log.py:117] [cached since 8.182s ago] ()
+INFO 2021-12-14 17:57:58,433 [core.py:1045] Executed callback '_prepare'
+INFO 2021-12-14 17:57:58,433 [core.py:128] Exited state prepare
+INFO 2021-12-14 17:57:58,433 [core.py:122] Entered state init
+INFO 2021-12-14 17:57:58,437 [core.py:1045] Executed callback '_anchor_progress'
+INFO 2021-12-14 17:57:58,441 [core.py:1045] Executed callback '_anchor_progress'
+INFO 2021-12-14 17:57:58,441 [core.py:128] Exited state init
+INFO 2021-12-14 17:57:58,441 [core.py:122] Entered state anchor_done
+INFO 2021-12-14 17:57:58,442 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:58,443 [core.py:128] Exited state anchor_done
+INFO 2021-12-14 17:57:58,443 [core.py:122] Entered state field_progress
+INFO 2021-12-14 17:57:58,444 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:58,446 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:58,446 [core.py:128] Exited state field_progress
+INFO 2021-12-14 17:57:58,446 [core.py:122] Entered state split_box
+INFO 2021-12-14 17:57:58,462 [core.py:1045] Executed callback '_split_box_prepare_again'
+INFO 2021-12-14 17:57:58,462 [core.py:128] Exited state split_box
+INFO 2021-12-14 17:57:58,462 [core.py:122] Entered state split_box_done
+INFO 2021-12-14 17:57:58,464 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:58,465 [core.py:128] Exited state split_box_done
+INFO 2021-12-14 17:57:58,465 [core.py:122] Entered state split_box_done
+INFO 2021-12-14 17:57:58,467 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:58,470 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 17:57:58,470 [core.py:128] Exited state split_box_done
+INFO 2021-12-14 17:57:58,471 [core.py:122] Entered state field_done
+INFO 2021-12-14 17:59:43,302 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:59:43,303 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates 
+WHERE templates.name = ?
+ LIMIT ? OFFSET ?
+INFO 2021-12-14 17:59:43,303 [log.py:117] [generated in 0.00014s] ('gppz', 1, 0)
+INFO 2021-12-14 17:59:43,304 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns 
+WHERE patterns.name = ?
+ LIMIT ? OFFSET ?
+INFO 2021-12-14 17:59:43,304 [log.py:117] [generated in 0.00013s] ('gppz', 1, 0)
+INFO 2021-12-14 17:59:43,305 [log.py:117] COMMIT
+INFO 2021-12-14 17:59:44,592 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:59:44,593 [log.py:117] PRAGMA main.table_info("templates")
+INFO 2021-12-14 17:59:44,593 [log.py:117] [raw sql] ()
+INFO 2021-12-14 17:59:44,593 [log.py:117] COMMIT
+INFO 2021-12-14 17:59:44,593 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:59:44,593 [log.py:117] PRAGMA main.table_info("patterns")
+INFO 2021-12-14 17:59:44,593 [log.py:117] [raw sql] ()
+INFO 2021-12-14 17:59:44,593 [log.py:117] COMMIT
+INFO 2021-12-14 17:59:44,602 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:59:44,603 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 17:59:44,603 [log.py:117] [generated in 0.00010s] ()
+INFO 2021-12-14 17:59:44,604 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:59:44,605 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:59:44,605 [log.py:117] [generated in 0.00008s] ()
+INFO 2021-12-14 17:59:44,607 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:59:44,607 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 17:59:44,607 [log.py:117] [cached since 0.003859s ago] ()
+INFO 2021-12-14 17:59:44,608 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 17:59:44,608 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 17:59:44,608 [log.py:117] [cached since 0.003365s ago] ()
+INFO 2021-12-14 18:00:09,576 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:09,577 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates 
+WHERE templates.name = ?
+ LIMIT ? OFFSET ?
+INFO 2021-12-14 18:00:09,577 [log.py:117] [generated in 0.00012s] ('gppz', 1, 0)
+INFO 2021-12-14 18:00:09,578 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns 
+WHERE patterns.name = ?
+ LIMIT ? OFFSET ?
+INFO 2021-12-14 18:00:09,578 [log.py:117] [generated in 0.00011s] ('gppz', 1, 0)
+INFO 2021-12-14 18:00:09,579 [log.py:117] COMMIT
+INFO 2021-12-14 18:00:10,839 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:10,839 [log.py:117] PRAGMA main.table_info("templates")
+INFO 2021-12-14 18:00:10,839 [log.py:117] [raw sql] ()
+INFO 2021-12-14 18:00:10,839 [log.py:117] COMMIT
+INFO 2021-12-14 18:00:10,839 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:10,839 [log.py:117] PRAGMA main.table_info("patterns")
+INFO 2021-12-14 18:00:10,839 [log.py:117] [raw sql] ()
+INFO 2021-12-14 18:00:10,840 [log.py:117] COMMIT
+INFO 2021-12-14 18:00:10,849 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:10,850 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 18:00:10,850 [log.py:117] [generated in 0.00010s] ()
+INFO 2021-12-14 18:00:10,851 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:10,851 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:00:10,851 [log.py:117] [generated in 0.00009s] ()
+INFO 2021-12-14 18:00:10,854 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:10,854 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 18:00:10,854 [log.py:117] [cached since 0.003942s ago] ()
+INFO 2021-12-14 18:00:10,854 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:10,855 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:00:10,855 [log.py:117] [cached since 0.003447s ago] ()
+INFO 2021-12-14 18:00:45,104 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:45,104 [log.py:117] PRAGMA main.table_info("templates")
+INFO 2021-12-14 18:00:45,104 [log.py:117] [raw sql] ()
+INFO 2021-12-14 18:00:45,104 [log.py:117] COMMIT
+INFO 2021-12-14 18:00:45,104 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:45,105 [log.py:117] PRAGMA main.table_info("patterns")
+INFO 2021-12-14 18:00:45,105 [log.py:117] [raw sql] ()
+INFO 2021-12-14 18:00:45,105 [log.py:117] COMMIT
+INFO 2021-12-14 18:00:45,114 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:45,115 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 18:00:45,115 [log.py:117] [generated in 0.00012s] ()
+INFO 2021-12-14 18:00:45,116 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:45,116 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:00:45,116 [log.py:117] [generated in 0.00009s] ()
+INFO 2021-12-14 18:00:45,119 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:45,119 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 18:00:45,119 [log.py:117] [cached since 0.004276s ago] ()
+INFO 2021-12-14 18:00:45,120 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:00:45,120 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:00:45,120 [log.py:117] [cached since 0.003756s ago] ()
+INFO 2021-12-14 18:02:59,539 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:02:59,539 [log.py:117] PRAGMA main.table_info("templates")
+INFO 2021-12-14 18:02:59,539 [log.py:117] [raw sql] ()
+INFO 2021-12-14 18:02:59,539 [log.py:117] COMMIT
+INFO 2021-12-14 18:02:59,539 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:02:59,539 [log.py:117] PRAGMA main.table_info("patterns")
+INFO 2021-12-14 18:02:59,539 [log.py:117] [raw sql] ()
+INFO 2021-12-14 18:02:59,540 [log.py:117] COMMIT
+INFO 2021-12-14 18:02:59,548 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:02:59,549 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 18:02:59,549 [log.py:117] [generated in 0.00010s] ()
+INFO 2021-12-14 18:02:59,550 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:02:59,551 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:02:59,551 [log.py:117] [generated in 0.00009s] ()
+INFO 2021-12-14 18:02:59,553 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:02:59,553 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 18:02:59,553 [log.py:117] [cached since 0.003837s ago] ()
+INFO 2021-12-14 18:02:59,554 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:02:59,554 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:02:59,554 [log.py:117] [cached since 0.003368s ago] ()
+INFO 2021-12-14 18:03:18,804 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:03:18,804 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:03:18,804 [log.py:117] [cached since 19.25s ago] ()
+INFO 2021-12-14 18:03:18,806 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:03:18,806 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:03:18,806 [log.py:117] [cached since 19.26s ago] ()
+INFO 2021-12-14 18:03:18,821 [core.py:1045] Executed callback '_prepare'
+INFO 2021-12-14 18:03:18,821 [core.py:128] Exited state prepare
+INFO 2021-12-14 18:03:18,821 [core.py:122] Entered state init
+INFO 2021-12-14 18:03:18,824 [core.py:1045] Executed callback '_anchor_progress'
+INFO 2021-12-14 18:03:18,828 [core.py:1045] Executed callback '_anchor_progress'
+INFO 2021-12-14 18:03:18,828 [core.py:128] Exited state init
+INFO 2021-12-14 18:03:18,828 [core.py:122] Entered state anchor_done
+INFO 2021-12-14 18:03:18,830 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:03:18,830 [core.py:128] Exited state anchor_done
+INFO 2021-12-14 18:03:18,830 [core.py:122] Entered state field_progress
+INFO 2021-12-14 18:03:18,832 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:03:18,834 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:03:18,834 [core.py:128] Exited state field_progress
+INFO 2021-12-14 18:03:18,834 [core.py:122] Entered state split_box
+INFO 2021-12-14 18:03:18,849 [core.py:1045] Executed callback '_split_box_prepare_again'
+INFO 2021-12-14 18:03:18,849 [core.py:128] Exited state split_box
+INFO 2021-12-14 18:03:18,849 [core.py:122] Entered state split_box_done
+INFO 2021-12-14 18:03:18,852 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:03:18,852 [core.py:128] Exited state split_box_done
+INFO 2021-12-14 18:03:18,852 [core.py:122] Entered state split_box_done
+INFO 2021-12-14 18:03:18,856 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:03:18,859 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:03:18,859 [core.py:128] Exited state split_box_done
+INFO 2021-12-14 18:03:18,859 [core.py:122] Entered state field_done
+INFO 2021-12-14 18:04:33,622 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:04:33,623 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates 
+WHERE templates.name = ?
+ LIMIT ? OFFSET ?
+INFO 2021-12-14 18:04:33,623 [log.py:117] [generated in 0.00013s] ('gppz', 1, 0)
+INFO 2021-12-14 18:04:33,624 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns 
+WHERE patterns.name = ?
+ LIMIT ? OFFSET ?
+INFO 2021-12-14 18:04:33,624 [log.py:117] [generated in 0.00010s] ('gppz', 1, 0)
+INFO 2021-12-14 18:04:33,624 [log.py:117] COMMIT
+INFO 2021-12-14 18:04:34,866 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:04:34,866 [log.py:117] PRAGMA main.table_info("templates")
+INFO 2021-12-14 18:04:34,866 [log.py:117] [raw sql] ()
+INFO 2021-12-14 18:04:34,866 [log.py:117] COMMIT
+INFO 2021-12-14 18:04:34,866 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:04:34,866 [log.py:117] PRAGMA main.table_info("patterns")
+INFO 2021-12-14 18:04:34,866 [log.py:117] [raw sql] ()
+INFO 2021-12-14 18:04:34,867 [log.py:117] COMMIT
+INFO 2021-12-14 18:04:34,875 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:04:34,876 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 18:04:34,876 [log.py:117] [generated in 0.00012s] ()
+INFO 2021-12-14 18:04:34,877 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:04:34,878 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:04:34,878 [log.py:117] [generated in 0.00009s] ()
+INFO 2021-12-14 18:04:34,880 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:04:34,880 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 18:04:34,880 [log.py:117] [cached since 0.004167s ago] ()
+INFO 2021-12-14 18:04:34,881 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:04:34,881 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:04:34,881 [log.py:117] [cached since 0.003548s ago] ()
+INFO 2021-12-14 18:04:59,152 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:04:59,153 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:04:59,153 [log.py:117] [cached since 24.27s ago] ()
+INFO 2021-12-14 18:04:59,154 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:04:59,154 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:04:59,154 [log.py:117] [cached since 24.28s ago] ()
+INFO 2021-12-14 18:04:59,169 [core.py:1045] Executed callback '_prepare'
+INFO 2021-12-14 18:04:59,169 [core.py:128] Exited state prepare
+INFO 2021-12-14 18:04:59,169 [core.py:122] Entered state init
+INFO 2021-12-14 18:04:59,173 [core.py:1045] Executed callback '_anchor_progress'
+INFO 2021-12-14 18:04:59,176 [core.py:1045] Executed callback '_anchor_progress'
+INFO 2021-12-14 18:04:59,177 [core.py:128] Exited state init
+INFO 2021-12-14 18:04:59,177 [core.py:122] Entered state anchor_done
+INFO 2021-12-14 18:04:59,178 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:04:59,178 [core.py:128] Exited state anchor_done
+INFO 2021-12-14 18:04:59,178 [core.py:122] Entered state field_progress
+INFO 2021-12-14 18:04:59,180 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:04:59,182 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:04:59,182 [core.py:128] Exited state field_progress
+INFO 2021-12-14 18:04:59,182 [core.py:122] Entered state split_box
+INFO 2021-12-14 18:04:59,197 [core.py:1045] Executed callback '_split_box_prepare_again'
+INFO 2021-12-14 18:04:59,197 [core.py:128] Exited state split_box
+INFO 2021-12-14 18:04:59,197 [core.py:122] Entered state split_box_done
+INFO 2021-12-14 18:04:59,200 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:04:59,200 [core.py:128] Exited state split_box_done
+INFO 2021-12-14 18:04:59,200 [core.py:122] Entered state split_box_done
+INFO 2021-12-14 18:04:59,202 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:04:59,205 [core.py:1045] Executed callback '_field_progress'
+INFO 2021-12-14 18:04:59,205 [core.py:128] Exited state split_box_done
+INFO 2021-12-14 18:04:59,205 [core.py:122] Entered state field_done
+INFO 2021-12-14 18:08:32,355 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:08:32,355 [log.py:117] PRAGMA main.table_info("templates")
+INFO 2021-12-14 18:08:32,356 [log.py:117] [raw sql] ()
+INFO 2021-12-14 18:08:32,356 [log.py:117] COMMIT
+INFO 2021-12-14 18:08:32,356 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:08:32,356 [log.py:117] PRAGMA main.table_info("patterns")
+INFO 2021-12-14 18:08:32,356 [log.py:117] [raw sql] ()
+INFO 2021-12-14 18:08:32,356 [log.py:117] COMMIT
+INFO 2021-12-14 18:08:32,365 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:08:32,366 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 18:08:32,366 [log.py:117] [generated in 0.00010s] ()
+INFO 2021-12-14 18:08:32,367 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:08:32,367 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:08:32,367 [log.py:117] [generated in 0.00008s] ()
+INFO 2021-12-14 18:08:32,369 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:08:32,369 [log.py:117] SELECT templates.id AS templates_id, templates.name AS templates_name, templates.config AS templates_config 
+FROM templates
+INFO 2021-12-14 18:08:32,370 [log.py:117] [cached since 0.003806s ago] ()
+INFO 2021-12-14 18:08:32,370 [log.py:117] BEGIN (implicit)
+INFO 2021-12-14 18:08:32,370 [log.py:117] SELECT patterns.id AS patterns_id, patterns.name AS patterns_name, patterns.config AS patterns_config 
+FROM patterns
+INFO 2021-12-14 18:08:32,370 [log.py:117] [cached since 0.00332s ago] ()

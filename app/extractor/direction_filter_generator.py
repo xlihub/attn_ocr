@@ -1,5 +1,6 @@
 from app.extractor.invoice_config import *
 import app.extractor.example
+import app.invoice_template.template
 import pandas as pd
 import numpy as np
 
@@ -60,6 +61,7 @@ def get_direction_filter(sample=None):
         examples = app.extractor.example.examples
 
     invoice_direction_filter = dict()
+    invoice_pattern = get_invoice_pattern()
     for invoice_type in invoice_pattern:
         label = examples[invoice_type]["shapes"]
         anchors = {}

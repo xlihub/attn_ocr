@@ -403,7 +403,7 @@ class DataHandle(object):
         self.ocr = ocr.copy()
         self.box = box.copy()
         self.ocr_original = ocr_original.copy()
-        self.invoice_type = invoice_type if invoice_type in invoice_pattern else "common"
+        self.invoice_type = invoice_type if invoice_type in get_invoice_pattern() else "common"
         self.debug = debug
         self.debug_filter = debug_filter
         self.bool_require = bool_require
@@ -416,8 +416,8 @@ class DataHandle(object):
         self.vote_direction = pd.DataFrame()
         self.current_score = {}
         self.tries = 0
-        self.requirement = invoice_pattern[self.invoice_type]
-        self.special_handle = special_handle.get(self.invoice_type, {})
+        self.requirement = get_invoice_pattern()[self.invoice_type]
+        self.special_handle = get_special_handle().get(self.invoice_type, {})
         self.direction_filter = invoice_direction_filter.get(self.invoice_type, {})
         self.output_handle = output_handle.get(self.invoice_type, {})
         self.machine = Machine(model=self, states=States, transitions=DataHandle.transitions, initial=States.prepare)
@@ -510,7 +510,7 @@ class DataHandle(object):
             np_array.append(i.original_np[ctc_padding:]) if index > 0 else np_array.append(i.original_np)
         return "".join(text), min(x), min(y), max(x), max(y), np.concatenate(np_array, axis=0)
 
-    def _handle_by(self, handle, text_box_list, current_score, field, anchor, siamese_threshold=0.9):
+    def _handle_by(self, handle, text_box_list, current_score, field, anchor, direction, siamese_threshold=0.9):
         x = {i: textbox.x for i, textbox in enumerate(text_box_list)}
         y = {i: textbox.y for i, textbox in enumerate(text_box_list)}
         if handle == "concat_x":
@@ -535,7 +535,17 @@ class DataHandle(object):
             text_list = [text_box_list[i] for i, loc in dict_sorted]
             text_list = [box for box in text_list if self.data[field].siamese_ratio(box) > siamese_threshold]
             if len(text_list):
-                return TextBox(*self._concat_text_boxes(text_list))
+                if isinstance(direction, list):
+                    for direct in direction:
+                        box_list = [box for box in text_list if
+                                    self.boxes_direction[(anchor, box)] == direct]
+                        if len(box_list):
+                            text_list = anchor.get_nearest(box_list)
+                            break
+                else:
+                    text_list = anchor.get_nearest(text_list)
+                # return TextBox(*self._concat_text_boxes(text_list))
+                return text_list
             else:
                 return anchor
 
@@ -551,14 +561,14 @@ class DataHandle(object):
         for field, (anchors, direction, handle) in self.special_handle.items():
             anchor_box = self._get_fist_anchor(anchors)
             if anchor_box:
-                if isinstance(direction, tuple):
+                if isinstance(direction, list):
                     box_list = [box for box in self.text_boxes if self.boxes_direction[(anchor_box, box)] in direction]
                 else:
                     box_list = [box for box in self.text_boxes if self.boxes_direction[(anchor_box, box)] == direction]
                 # print(field, anchors, direction, handle)
                 # print(self.current_score[field].text)
                 self.current_score[field] = self._handle_by(handle, box_list, self.current_score.get(field, None),
-                                                            field, anchor_box) if box_list else None
+                                                            field, anchor_box, direction) if box_list else None
                 # print(self.current_score[field].text)
 
     def _text_handle(self, text, handle):
@@ -576,6 +586,11 @@ class DataHandle(object):
                 if char == 'num':
                     if loc == 'int':
                         text_list = re.findall(r"\d+?\d*", text)
+                        text = ''
+                        for text_str in text_list:
+                            text += text_str
+                    elif loc == 'float':
+                        text_list = re.findall(r"(\d+?\d*.\d+?\d*)", text)
                         text = ''
                         for text_str in text_list:
                             text += text_str

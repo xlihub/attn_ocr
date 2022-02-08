@@ -3,3 +3,5 @@ __pycache__
 debug_rect.png
 test_img
 *.csv
+.idea
+nohup.out

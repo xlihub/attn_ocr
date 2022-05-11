@@ -558,18 +558,19 @@ class DataHandle(object):
         return None
 
     def _special_handle(self):
-        for field, (anchors, direction, handle) in self.special_handle.items():
-            anchor_box = self._get_fist_anchor(anchors)
-            if anchor_box:
-                if isinstance(direction, list):
-                    box_list = [box for box in self.text_boxes if self.boxes_direction[(anchor_box, box)] in direction]
-                else:
-                    box_list = [box for box in self.text_boxes if self.boxes_direction[(anchor_box, box)] == direction]
-                # print(field, anchors, direction, handle)
-                # print(self.current_score[field].text)
-                self.current_score[field] = self._handle_by(handle, box_list, self.current_score.get(field, None),
-                                                            field, anchor_box, direction) if box_list else None
-                # print(self.current_score[field].text)
+        if self.special_handle is not None:
+            for field, (anchors, direction, handle) in self.special_handle.items():
+                anchor_box = self._get_fist_anchor(anchors)
+                if anchor_box:
+                    if isinstance(direction, list):
+                        box_list = [box for box in self.text_boxes if self.boxes_direction[(anchor_box, box)] in direction]
+                    else:
+                        box_list = [box for box in self.text_boxes if self.boxes_direction[(anchor_box, box)] == direction]
+                    # print(field, anchors, direction, handle)
+                    # print(self.current_score[field].text)
+                    self.current_score[field] = self._handle_by(handle, box_list, self.current_score.get(field, None),
+                                                                field, anchor_box, direction) if box_list else None
+                    # print(self.current_score[field].text)
 
     def _text_handle(self, text, handle):
         if handle:

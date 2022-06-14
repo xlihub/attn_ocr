@@ -53,6 +53,7 @@ class Pattern(Base):
     config = Column(JSON)
     extra = Column(JSON)
     special_handle = Column(JSON)
+    output_handle = Column(JSON)
 
     def __repr__(self):
         return "<Pattern(name='%s', config='%s')>" % (
@@ -75,3 +76,6 @@ Pattern.__table__.create(engine, checkfirst=True)
 # Base.metadata.create_all(engine,tables=[Base.metadata.tables['users']],checkfirst=True)
 # 在项目中由于model经常在别的文件定义，没主动加载时上边的写法可能写导致报错，可使用下边这种更明确的写法
 # User.__table__.create(engine, checkfirst=True)
+# 更新表结构
+# alembic revision --autogenerate -m "first commit" 创建更新文件
+# alembic upgrade head 将更新映射到数据库

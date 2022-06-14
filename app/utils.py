@@ -8,7 +8,7 @@ import math
 import sys
 import re
 import itertools
-from pyzbar.pyzbar import decode
+import pyzbar.pyzbar as pyzbar
 from scipy.ndimage import affine_transform
 from keras.preprocessing.image import img_to_array
 from keras import backend as K
@@ -17,8 +17,13 @@ import skimage.io
 from skimage.measure import regionprops
 from skimage.morphology import label
 import time
+import random
+import os
+import imutils
 
 from app.key_dicts import ALPHABET
+import subprocess
+import os.path as osp
 
 alphabet = ALPHABET + u'卍'
 
@@ -231,40 +236,198 @@ def _cal_edge_length(points):
     return min(distanse)
 
 
-def qrcode_dewarp(pil_img):
-    qrcode_result = decode(pil_img)
-    if qrcode_result:
-        if len(qrcode_result) > 0:
+def prepare_images(img):
+    is_list = False
+    if isinstance(img, list):
+        results_list = []
+        for index, pil_img in enumerate(img):
+            raw_path = '/home/attnroot/attn_ocr/app/qrcode/rawImages'
+            if not os.path.exists(raw_path):
+                os.makedirs(raw_path)
+            img_path = '/home/attnroot/attn_ocr/app/qrcode/rawImages/raw_' + str(index) + '.jpg'
+            pil_img.save(img_path)
+            qrcode_result = predict_bar_image([img_path])
             results = []
-            index = 1
-            for result in qrcode_result:
-                data = result[0]
-                type = result[1]
-                res = data.decode('utf-8')
-                if type == 'QRCODE':
-                    type = 'QRCODE' + str(index)
-                results.append({type: res})
-                index += 1
-            return results
-        else:
-            return []
-            """
-            points = [(i[0], i[1]) for i in qrcode_result[0][3]]
-            center, points = _cal_center_point(points)
-            length = _cal_edge_length(points)
-            half = int(length * 0.4)
-            dewarp_points = [(center[0] - half, center[1] - half),
-                             (center[0] - half, center[1] + half),
-                             (center[0] + half, center[1] + half),
-                             (center[0] + half, center[1] - half)]
-            M = cv2.getPerspectiveTransform(np.float32(points), np.float32(dewarp_points))
-            cv2_img = np.asarray(pil_img)
-            dst = cv2.warpPerspective(cv2_img, M, (cv2_img.shape[1], cv2_img.shape[0]))
-            return Image.fromarray(dst)
-            """
+            if qrcode_result:
+                if len(qrcode_result) > 0:
+                    for result in qrcode_result:
+                        data = result['data']
+                        type = result['type']
+                        if type is not 'QRCODE':
+                            results.append({type: data})
+            results_list.append(results)
+        is_list = True
+        return is_list, results_list
     else:
-        return []
-        # return pil_img
+        img_path = '/home/attnroot/attn_ocr/app/qrcode/raw.jpg'
+        img.save(img_path)
+        qrcode_result = predict_bar_image([img_path])
+        results = []
+        if qrcode_result:
+            if len(qrcode_result) > 0:
+                for result in qrcode_result:
+                    data = result['data']
+                    type = result['type']
+                    if type is not 'QRCODE':
+                        results.append({type: data})
+        return is_list, results
+
+
+def qrcode_dewarp(pil_img):
+    is_list, results = prepare_images(pil_img)
+    # 将训练日志写入out.log与err.log文件
+    mode = 'w'
+    dst_path = '/home/attnroot/attn_ocr/app/qrcode/'
+    outlog = open(osp.join(dst_path, 'out.log'), mode=mode, encoding='utf-8')
+    errlog = open(osp.join(dst_path, 'err.log'), mode=mode, encoding='utf-8')
+    outlog.write("This log file path is {}\n".format(
+        osp.join(dst_path, 'out.log')))
+    outlog.write("注意：标志为WARNING/INFO类的仅为警告或提示类信息，非错误信息\n")
+    errlog.write("This log file path is {}\n".format(
+        osp.join(dst_path, 'err.log')))
+    errlog.write("注意：标志为WARNING/INFO类的仅为警告或提示类信息，非错误信息\n")
+
+    if is_list:
+        train = subprocess.Popen(
+            args='/home/attnroot/anaconda3/envs/invoiceocr/bin/python /home/attnroot/attn_ocr/app/qrcode/infer_qr.py --image_dir=/home/attnroot/attn_ocr/app/qrcode/rawImages',
+            shell=True, stdout=outlog, stderr=errlog, universal_newlines=True,
+            encoding='utf-8')
+    else:
+        train = subprocess.Popen(
+            args='/home/attnroot/anaconda3/envs/invoiceocr/bin/python /home/attnroot/attn_ocr/app/qrcode/infer_qr.py --image_file=/home/attnroot/attn_ocr/app/qrcode/raw.jpg',
+            shell=True, stdout=outlog, stderr=errlog, universal_newlines=True,
+            encoding='utf-8')
+    while True:
+        flag = 1
+        if train.poll() is None:
+            flag = 0
+        if flag:
+            break
+    if is_list:
+        for index, result in enumerate(results):
+            txt_path = '/home/attnroot/attn_ocr/app/qrcode/rawImages/raw_' + str(index) + '_result.txt'
+            result = get_qrcode_results(txt_path, result)
+            results[index] = result
+    else:
+        txt_path = "/home/attnroot/attn_ocr/app/qrcode/raw_result.txt"
+        results = get_qrcode_results(txt_path, results)
+    return results
+
+
+def get_qrcode_results(txt_path, results):
+    f = open(txt_path, "r")
+    raw_result = f.readlines()
+    if len(raw_result) > 0:
+        index = 1
+        for line in raw_result:
+            line = line.strip('\n')  # 去掉列表中每一个元素的换行符
+            type = 'QRCODE' + str(index)
+            results.append({type: line})
+            index += 1
+        f.close()
+    # os.remove('/home/attnroot/attn_ocr/app/qrcode/raw.jpg')
+    # os.remove("/home/attnroot/attn_ocr/app/qrcode/raw_result.txt")
+    return results
+
+
+def predict_bar_image(image_list, batch_size=1):
+    # 读取图片并将其转化为灰度图片
+    batch_loop_cnt = math.ceil(float(len(image_list)) / batch_size)
+    for i in range(batch_loop_cnt):
+        result_list = []
+        start_index = i * batch_size
+        end_index = min((i + 1) * batch_size, len(image_list))
+        batch_image_list = image_list[start_index:end_index]
+        image = cv2.imread(batch_image_list[0])
+        image1 = image.copy()
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # 计算图像中x和y方向的Scharr梯度幅值表示
+        ddepth = cv2.cv.CV_32F if imutils.is_cv2() else cv2.CV_32F
+        gradX = cv2.Sobel(gray, ddepth=ddepth, dx=1, dy=0, ksize=-1)
+        gradY = cv2.Sobel(gray, ddepth=ddepth, dx=0, dy=1, ksize=-1)
+
+        # x方向的梯度减去y方向的梯度
+        gradient = cv2.subtract(gradX, gradY)
+        # 获取处理后的绝对值
+        gradient = cv2.convertScaleAbs(gradient)
+        # cv2.imwrite("gradient.png", gradient)
+
+        # 对处理后的结果进行模糊操作
+        blurred = cv2.blur(gradient, (9, 9))
+        # 将其转化为二值图片
+        (_, thresh) = cv2.threshold(blurred, 225, 255, cv2.THRESH_BINARY)
+        # cv2.imwrite("thresh.png", thresh)
+
+        # 构建一个掩码并将其应用在二值图片中
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 7))
+        closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+        # cv2.imwrite("closed1.png", closed)
+
+        # 执行多次膨胀和腐蚀操作
+        closed = cv2.erode(closed, None, iterations=4)
+        closed = cv2.dilate(closed, None, iterations=4)
+        # cv2.imwrite("closed2.png", closed)
+
+        # 在二值图像中寻找轮廓, 然后根据他们的区域大小对该轮廓进行排序，保留最大的一个轮廓
+        cnts = cv2.findContours(closed.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
+        areas = sorted(cnts, key=cv2.contourArea, reverse=True)
+        for area in areas:
+            # 计算最大的轮廓的最小外接矩形
+            rect = cv2.minAreaRect(area)
+            box = cv2.cv.BoxPoints(rect) if imutils.is_cv2() else cv2.boxPoints(rect)
+            box = np.int0(box)
+
+            # 找出四个顶点的x，y坐标的最大最小值。新图像的高=maxY-minY，宽=maxX-minX。
+            Xs = [i[0] for i in box]
+            Ys = [i[1] for i in box]
+            xmin = min(Xs)
+            xmax = max(Xs)
+            ymin = min(Ys)
+            ymax = max(Ys)
+            hight = ymax - ymin
+            width = xmax - xmin
+            # 找出条形码长方形轮廓
+            if abs(width - hight) < max(width, hight) / 3:
+                continue
+            else:
+                break
+        xmin = 0 if int(xmin) - 20 < 0 else int(xmin) - 20
+        ymin = 0 if int(ymin) - 20 < 0 else int(ymin) - 20
+        xmax = int(xmax) + 20
+        ymax = int(ymax) + 20
+        roi = image1[ymin:ymax, xmin: xmax]
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        # cv2.imwrite("crop_raw.jpg", roi)
+        # cv2.imwrite("crop_gray.jpg", gray)
+        barcodes = pyzbar.decode(gray)
+        if len(barcodes) == 0:
+            gray = cv2.resize(gray, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
+            # cv2.imwrite("crop_resize.jpg", gray)
+            barcodes = pyzbar.decode(gray)
+            if len(barcodes) == 0:
+                result_list = []
+                continue
+        # 这里循环，因为画面中可能有多个二维码
+        for barcode in barcodes:
+            # 条形码数据为字节对象，所以如果我们想在输出图像上画出来，就需要先将它转换成字符串
+            barcodeData = barcode.data.decode("UTF-8")
+            barcodeType = barcode.type
+            result_dic = {'type': barcodeType, 'data': barcodeData}
+            result_list.append(result_dic)
+            # 向终端打印条形码数据和条形码类型
+            # print("[INFO] Found {} barcode: {}".format(barcodeType, barcodeData))
+        # img_name = os.path.basename(batch_image_list[0]).split('.')[0]
+        # img_path = os.path.dirname(batch_image_list[0])
+        # file_path = img_path + '/' + img_name + '_bar_result.txt'
+        # out = open(file_path, 'w')
+        # for result in result_list:
+        #     type = result['type']
+        #     data = result['data']
+        #     out.write("[INFO] Found {} barcode: {}".format(type, data) + '\n')
+        # out.close()
+    return result_list
 
 
 def debug(fn):

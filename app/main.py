@@ -12,6 +12,8 @@ from app.invoice_template.template import get_examples, tencent_name_transform
 from app.extractor.invoice_config import *
 import ast
 import numpy as np
+import shutil
+import os
 
 app = FastAPI()
 
@@ -34,8 +36,20 @@ def update_temp():
 
 @app.post("/qrcode")
 def decode_qrcode(item: PaddleItem):
-    img = utils.qrcode_dewarp(utils.read_img_from_base64(item.ImageBase64, 'pil'))
-    return {"result": img}
+    if item.ImageBase64 is not None:
+        result = utils.qrcode_dewarp(utils.read_img_from_base64(item.ImageBase64, 'pil'))
+    if item.ImageList is not None:
+        raw_path = '/home/attnroot/attn_ocr/app/qrcode/rawImages'
+        if os.path.exists(raw_path):
+            shutil.rmtree(raw_path)
+        imagelist = []
+        for base64 in item.ImageList:
+            img = utils.read_img_from_base64(base64, 'pil')
+            imagelist.append(img)
+            result = utils.qrcode_dewarp(imagelist)
+        if os.path.exists(raw_path):
+            shutil.rmtree(raw_path)
+    return {"result": result}
 
 
 @debug

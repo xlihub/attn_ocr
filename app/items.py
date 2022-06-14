@@ -10,6 +10,7 @@ class InputItem(BaseModel):
 
 class PaddleItem(BaseModel):
     ImageBase64: str = None
+    ImageList: list = None
 
 
 class SegInputItem(BaseModel):

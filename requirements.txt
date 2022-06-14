@@ -8,7 +8,9 @@ scipy== 1.1.0
 scikit-image== 0.16.2
 imageio== 2.3.0
 requests== 2.23.0
-opencv-python~=4.2.0.32
+opencv-python
+opencv-contrib-python
+zxing
 urllib3==1.22
 pyzbar==0.1.8
 pandas==1.0.3
@@ -17,3 +19,9 @@ transitions==0.8.1
 sqlalchemy==1.4.27
 tensorflow== 1.13.1
 tensorflow-serving-api== 1.13.1
+paddle-serving-server-gpu==0.8.3.post112
+paddle-serving-client==0.8.3
+paddlepaddle-gpu==2.2.2.post112
+paddledet
+imutils
+alembic

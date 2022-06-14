@@ -331,6 +331,21 @@ def get_special_handle():
     return special_handle
 
 
+def get_output_handle():
+    output_handle = {}
+
+    # engine是2.2中创建的连接
+    Session = sessionmaker(bind=engine)
+
+    # 创建Session类实例
+    session = Session()
+    patterns = session.query(Pattern).all()
+    for pattern in patterns:
+        output_handle[pattern.name] = pattern.output_handle
+    print('_____')
+    return output_handle
+
+
 def get_extra():
     extra = {}
 
@@ -725,7 +740,7 @@ special_handle = {
         "money": ("__金额", (3, 6, 7, 8, 9), "nearest"),
     }
 }
-"""
+
 output_handle = {
     "train_ticket_tw": {
         "AMTN_NET": [("type", "", "num")],
@@ -738,6 +753,7 @@ output_handle = {
         "TAX": [("type", "int", "num")],
         "AMTN_NET": [("type", "int", "num")],
         "AMTN": [("type", "int", "num")],
+        "AMTN2": [("type", "int", "num")],
         "DUE_DATE": [("type", "/", "date")],
         "CARR_NO": [("type", "/", "CARR_NO")],
         "YYMM": [("type", "", "date")],
@@ -761,3 +777,4 @@ output_handle = {
         "time": [("slice", "before", "开"), ("insert", -2, ":")],
     }
 }
+"""

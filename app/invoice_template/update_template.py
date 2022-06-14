@@ -60,7 +60,14 @@ def initjsondata(jsondata):
             label = special[index]['label']
             values = special[index]['values']
             special_handle[label] = values
-    return jsondata, pattern, extra, special_handle
+    output_handle = {}
+    if 'output' in jsondata.keys():
+        output = jsondata['output']
+        for index in range(len(output)):
+            label = output[index]['label']
+            values = output[index]['values']
+            output_handle[label] = values
+    return jsondata, pattern, extra, special_handle, output_handle
 
 
 def update_temp():
@@ -86,11 +93,11 @@ def update_temp():
         our_template = session.query(Template).filter_by(name=temp_name).first()
 
         if not our_template:
-            temp, pattern, extra, special_handle = initjsondata(data)
+            temp, pattern, extra, special_handle, output_handle = initjsondata(data)
 
             # 创建Template类实例
             ed_template = Template(name=temp_name, config=temp)
-            ed_pattern = Pattern(name=temp_name, config=pattern, extra=extra, special_handle=special_handle)
+            ed_pattern = Pattern(name=temp_name, config=pattern, extra=extra, special_handle=special_handle, output_handle=output_handle)
             # 将该实例插入到users表
             session.add(ed_template)
             session.add(ed_pattern)
@@ -98,12 +105,13 @@ def update_temp():
             # Closing file
             f.close()
         else:
-            temp, pattern, extra, special_handle = initjsondata(data)
+            temp, pattern, extra, special_handle, output_handle = initjsondata(data)
             our_template.config = temp
             our_pattern = session.query(Pattern).filter_by(name=temp_name).first()
             our_pattern.config = pattern
             our_pattern.extra = extra
             our_pattern.special_handle = special_handle
+            our_pattern.output_handle = output_handle
             session.commit()
             f.close()
         # subprocess.call(args='./update_temp.sh', shell=True, cwd='/home/xli/OCR/invoice_ocr/app/invoice_template/')

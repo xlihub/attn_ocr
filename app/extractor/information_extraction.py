@@ -125,6 +125,7 @@ class StringMatcher:
 class TextBox(Box):
     def __init__(self, text, x1, y1, x2, y2, original_np):
         super(TextBox, self).__init__(x1, y1, x2, y2)
+        text = text.replace(' ', '')  # 去除字符串中的空格
         self.text = text
         self.split_flag = False
         self.original_np = original_np
@@ -150,9 +151,12 @@ class TextBox(Box):
             yy = self.text_original[ctc_padding:]
             ll = re.findall(ss, yy)
             lena = len(self.original_np)
-            lenb = len(ll[0]) + ctc_padding
-            end = len(self.original_np) if index == len(self.text) - 1 else len(
-                ll[0]) + ctc_padding
+            if len(ll) == 0:
+                end = index_end
+            else:
+                lenb = len(ll[0]) + ctc_padding
+                end = len(self.original_np) if index == len(self.text) - 1 else len(
+                    ll[0]) + ctc_padding
         else:
             end = len(self.original_np) if index == len(self.text) - 1 else len(
                 re.findall("卍{0,}[" + "]{1,}卍{0,}[".join(list(self.text[:index + 1])) + "]{1,}",
@@ -419,7 +423,7 @@ class DataHandle(object):
         self.requirement = get_invoice_pattern()[self.invoice_type]
         self.special_handle = get_special_handle().get(self.invoice_type, {})
         self.direction_filter = invoice_direction_filter.get(self.invoice_type, {})
-        self.output_handle = output_handle.get(self.invoice_type, {})
+        self.output_handle = get_output_handle().get(self.invoice_type, {})
         self.machine = Machine(model=self, states=States, transitions=DataHandle.transitions, initial=States.prepare)
 
     def _prepare(self):
@@ -649,7 +653,8 @@ class DataHandle(object):
                 # print(type(field_obj.mask))
                 terminal[field] = self.current_score[field].decode_score(field_obj.mask)
                 # print(terminal[field])
-                terminal[field] = self._output_handle(terminal[field], self.output_handle.get(field, []))
+                if self.output_handle:
+                    terminal[field] = self._output_handle(terminal[field], self.output_handle.get(field, []))
             else:
                 terminal[field] = ""
         return terminal

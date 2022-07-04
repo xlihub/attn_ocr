@@ -9,6 +9,8 @@ from glob import glob
 import os
 from app.initdb import engine, User, Template, Pattern
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.attributes import set_attribute
+from sqlalchemy.orm.attributes import flag_modified
 
 siamese_decode = {
     "S": "ℤ",
@@ -107,11 +109,16 @@ def update_temp():
         else:
             temp, pattern, extra, special_handle, output_handle = initjsondata(data)
             our_template.config = temp
+            flag_modified(our_template, 'config')
             our_pattern = session.query(Pattern).filter_by(name=temp_name).first()
             our_pattern.config = pattern
+            flag_modified(our_pattern, 'config')
             our_pattern.extra = extra
+            flag_modified(our_pattern, 'extra')
             our_pattern.special_handle = special_handle
+            flag_modified(our_pattern, 'special_handle')
             our_pattern.output_handle = output_handle
+            flag_modified(our_pattern, 'output_handle')
             session.commit()
             f.close()
         # subprocess.call(args='./update_temp.sh', shell=True, cwd='/home/xli/OCR/invoice_ocr/app/invoice_template/')

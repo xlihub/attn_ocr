@@ -434,6 +434,7 @@ class PaddleOutputParser(object):
         self.fp_dict['RequestId'] = self._decode()
         self.fp_dict['Code'] = self.code
         self.fp_dict['Message'] = 'Success' if self.code == '200' else 'Error'
+        self.fp_dict['InvoiceResult'] = self.predicts['result']
         if len(self.predicts['result']):
             for i in range(len(self.predicts['result'])):
                 self.fp_dict["InvoiceInfos"] = checkdata(self.predicts['im_type'], {k: v for k, v in self.predicts['result'][i].items() if

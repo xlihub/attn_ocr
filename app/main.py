@@ -153,6 +153,64 @@ def predict(item: PaddleItem):
 
 
 @debug
+@app.post('/pred_raw')
+def predict(item: PaddleItem):
+    client = PaddleClient()
+    predicts = client.predict(item.ImageBase64)
+    # predicts = eval(predicts.value[0])
+    # print(predicts.value[0])
+    # from google.protobuf.json_format import MessageToJson
+    # jsonObj = MessageToJson(predicts)
+    # from google.protobuf.json_format import MessageToDict
+    # dict_obj = MessageToDict(predicts)
+    if len(predicts.value) == 1:
+        im_type = predicts.value[0]
+        if im_type == 'unknown':
+            output_parser = PaddleOutputParser(item, {'result': [], 'im_type': im_type, 'extra': {}})
+            response = output_parser.parse_output()
+        else:
+            res = ast.literal_eval(im_type)
+            results = []
+            for preb_dict in res:
+                preb_list = []
+                preb_ls = ast.literal_eval(preb_dict['preb'])
+                for preb_str in preb_ls:
+                    preb = np.frombuffer(preb_str['bytes'], dtype=preb_str['dtype']).reshape(preb_str['shape'])
+                    preb_list.append(preb)
+                    # preds_idx = preb.argmax(axis=1)
+                    # print(preds_idx)
+                # data = np.fromstring(predicts.value[1], np.float32)
+                text_dict = ast.literal_eval(preb_dict['text'])
+                boxes_dict = ast.literal_eval(preb_dict['boxes'])
+                im_type = preb_dict['im_type']
+                # dic = pb2dict(predicts)
+                response = {'text': str(text_dict)}
+                print(text_dict)
+            output_parser = SegmentationOutputParser(item, text_dict)
+            # output_parser = TxOutputParser(item, *predicts)
+            response = output_parser.parse_output()
+    else:
+        preb_dict = ast.literal_eval(predicts.value[1])
+        preb_list = []
+        for preb_str in preb_dict:
+            preb = np.frombuffer(preb_str['bytes'], dtype=preb_str['dtype']).reshape(preb_str['shape'])
+            preb_list.append(preb)
+            # preds_idx = preb.argmax(axis=1)
+            # print(preds_idx)
+        # data = np.fromstring(predicts.value[1], np.float32)
+        text_dict = ast.literal_eval(predicts.value[0])
+        boxes_dict = ast.literal_eval(predicts.value[2])
+        im_type = predicts.value[3]
+        # dic = pb2dict(predicts)
+        response = {'text': str(text_dict)}
+        print(text_dict)
+        output_parser = SegmentationOutputParser(item, text_dict)
+        # output_parser = TxOutputParser(item, *predicts)
+        response = output_parser.parse_output()
+    return response
+
+
+@debug
 @app.post('/pred')
 def predict(item: PaddleItem):
     client = PaddleCHClient()

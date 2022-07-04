@@ -17,8 +17,6 @@ pandas==1.0.3
 python-Levenshtein==0.12.0
 transitions==0.8.1
 sqlalchemy==1.4.27
-tensorflow== 1.13.1
-tensorflow-serving-api== 1.13.1
 paddle-serving-server-gpu==0.8.3.post112
 paddle-serving-client==0.8.3
 paddlepaddle-gpu==2.2.2.post112

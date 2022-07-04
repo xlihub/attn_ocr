@@ -3,7 +3,6 @@ import time
 from PIL import Image
 import logging
 from keras.applications.vgg16 import preprocess_input
-from app.serving_client import BaseClient, AsyncClient, MaskRcnnClient
 from app.config import MODEL_URL, DEBUG
 from app.key_dicts import east_threshold, max_predict_size, ALPHABET
 import app.utils as utils
@@ -22,27 +21,6 @@ import app.maskrcnn_utils as rcnn_utils
 # import matplotlib.pyplot as plt
 import skimage.io
 import app.maskrcnn_config as rcnn_config
-
-## 获取模型地址
-try:
-    east_client = BaseClient(os.environ['MODEL_EAST'], 'east')
-except KeyError:
-    east_client = BaseClient(MODEL_URL['MODEL_EAST'], 'east')
-
-try:
-    ocr_client = AsyncClient(os.environ['MODEL_OCR'], 'ocr')
-except KeyError:
-    ocr_client = AsyncClient(MODEL_URL['MODEL_OCR'], 'ocr')
-
-try:
-    angle_client = BaseClient(os.environ['MODEL_ANGLE'], 'angle')
-except KeyError:
-    angle_client = BaseClient(MODEL_URL['MODEL_ANGLE'], 'angle')
-
-try:
-    maskrcnn_client = MaskRcnnClient(os.environ['MODEL_MASKRCNN'], 'maskrcnn')
-except KeyError:
-    maskrcnn_client = MaskRcnnClient(MODEL_URL['MODEL_MASKRCNN'], 'maskrcnn')
 
 ##
 logger = logging.getLogger(__name__)

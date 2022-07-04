@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from app import utils
 from app.utils import debug
-from app.handler import OcrEngine, east_client, ocr_client, angle_client, maskrcnn_client, TxOutputParser, \
+from app.handler import OcrEngine, TxOutputParser, \
     SegmentationOutputParser, MultiOutputParser, PaddleOutputParser, PaddleMutiOutputParser, PaddleCHOutputParser
 from app.items import InputItem, SegInputItem, PaddleItem
 from app.serving_client import PaddleClient, PaddleCHClient
@@ -241,29 +241,6 @@ def predict(item: PaddleItem):
 #     predicts = engine.predict(item)
 #     output_parser = TxOutputParser(item, *predicts)
 #     return output_parser.parse_output(item.InvoiceType)
-
-
-@debug
-@app.post('/segmentation')
-def segmentation(item: SegInputItem):
-    engine = OcrEngine(east_client, ocr_client, angle_client, maskrcnn=maskrcnn_client)
-    predicts = engine.segmentation_predict(item)
-    output_parser = SegmentationOutputParser(item, predicts[2])
-
-    return output_parser.parse_output()
-
-
-@debug
-@app.post('/multi_invoices_predict')
-def multi_invoices_predict(item: SegInputItem):
-    engine = OcrEngine(east_client, ocr_client, angle_client, maskrcnn=maskrcnn_client)
-
-    predicts = engine.multi_invoices_predict(item)
-    output_parser = MultiOutputParser(item, *predicts)
-
-    # print("nicenicenicenicenicenicenicenicenicenicenicenicenicenicenicenicenicenicenicenice")
-
-    return output_parser.parse_output()
 
 
 def pb2dict(obj):

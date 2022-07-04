@@ -373,49 +373,50 @@ def predict_bar_image(image_list, batch_size=1):
         cnts = cv2.findContours(closed.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         areas = sorted(cnts, key=cv2.contourArea, reverse=True)
-        for area in areas:
-            # 计算最大的轮廓的最小外接矩形
-            rect = cv2.minAreaRect(area)
-            box = cv2.cv.BoxPoints(rect) if imutils.is_cv2() else cv2.boxPoints(rect)
-            box = np.int0(box)
+        if len(areas):
+            for area in areas:
+                # 计算最大的轮廓的最小外接矩形
+                rect = cv2.minAreaRect(area)
+                box = cv2.cv.BoxPoints(rect) if imutils.is_cv2() else cv2.boxPoints(rect)
+                box = np.int0(box)
 
-            # 找出四个顶点的x，y坐标的最大最小值。新图像的高=maxY-minY，宽=maxX-minX。
-            Xs = [i[0] for i in box]
-            Ys = [i[1] for i in box]
-            xmin = min(Xs)
-            xmax = max(Xs)
-            ymin = min(Ys)
-            ymax = max(Ys)
-            hight = ymax - ymin
-            width = xmax - xmin
-            # 找出条形码长方形轮廓
-            if abs(width - hight) < max(width, hight) / 3:
-                continue
-            else:
-                break
-        xmin = 0 if int(xmin) - 20 < 0 else int(xmin) - 20
-        ymin = 0 if int(ymin) - 20 < 0 else int(ymin) - 20
-        xmax = int(xmax) + 20
-        ymax = int(ymax) + 20
-        roi = image1[ymin:ymax, xmin: xmax]
-        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-        # cv2.imwrite("crop_raw.jpg", roi)
-        # cv2.imwrite("crop_gray.jpg", gray)
-        barcodes = pyzbar.decode(gray)
-        if len(barcodes) == 0:
-            gray = cv2.resize(gray, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
-            # cv2.imwrite("crop_resize.jpg", gray)
+                # 找出四个顶点的x，y坐标的最大最小值。新图像的高=maxY-minY，宽=maxX-minX。
+                Xs = [i[0] for i in box]
+                Ys = [i[1] for i in box]
+                xmin = min(Xs)
+                xmax = max(Xs)
+                ymin = min(Ys)
+                ymax = max(Ys)
+                hight = ymax - ymin
+                width = xmax - xmin
+                # 找出条形码长方形轮廓
+                if abs(width - hight) < max(width, hight) / 3:
+                    continue
+                else:
+                    break
+            xmin = 0 if int(xmin) - 20 < 0 else int(xmin) - 20
+            ymin = 0 if int(ymin) - 20 < 0 else int(ymin) - 20
+            xmax = int(xmax) + 20
+            ymax = int(ymax) + 20
+            roi = image1[ymin:ymax, xmin: xmax]
+            gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+            # cv2.imwrite("crop_raw.jpg", roi)
+            # cv2.imwrite("crop_gray.jpg", gray)
             barcodes = pyzbar.decode(gray)
             if len(barcodes) == 0:
-                result_list = []
-                continue
-        # 这里循环，因为画面中可能有多个二维码
-        for barcode in barcodes:
-            # 条形码数据为字节对象，所以如果我们想在输出图像上画出来，就需要先将它转换成字符串
-            barcodeData = barcode.data.decode("UTF-8")
-            barcodeType = barcode.type
-            result_dic = {'type': barcodeType, 'data': barcodeData}
-            result_list.append(result_dic)
+                gray = cv2.resize(gray, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
+                # cv2.imwrite("crop_resize.jpg", gray)
+                barcodes = pyzbar.decode(gray)
+                if len(barcodes) == 0:
+                    result_list = []
+                    continue
+            # 这里循环，因为画面中可能有多个二维码
+            for barcode in barcodes:
+                # 条形码数据为字节对象，所以如果我们想在输出图像上画出来，就需要先将它转换成字符串
+                barcodeData = barcode.data.decode("UTF-8")
+                barcodeType = barcode.type
+                result_dic = {'type': barcodeType, 'data': barcodeData}
+                result_list.append(result_dic)
             # 向终端打印条形码数据和条形码类型
             # print("[INFO] Found {} barcode: {}".format(barcodeType, barcodeData))
         # img_name = os.path.basename(batch_image_list[0]).split('.')[0]

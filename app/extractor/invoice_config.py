@@ -284,7 +284,7 @@ common_chinese = "".join(
 chinese = "".join([char for char in ALPHABET if u'\u4e00' <= char <= u'\u9fff'])
 
 siamese_decode_config = {
-    ".:：,，": "ℤ",
+    ".:：,，-()（）/": "ℤ",
     "0123456789": "ℂ",
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ": "ℇ",
     "abcdefghijklmnopqrstuvwxyz": "℈",

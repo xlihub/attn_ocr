@@ -520,13 +520,30 @@ class DataHandle(object):
         if handle == "concat_x":
             dict_sorted = sorted(x.items(), key=lambda i: i[1], reverse=False) if len(x) > 1 else list(x.items())
             text_list = [text_box_list[i] for i, loc in dict_sorted]
+            siamese_threshold = 0.6
             text_list = [box for box in text_list if self.data[field].siamese_ratio(box) > siamese_threshold]
-            return TextBox(*self._concat_text_boxes(text_list))
+            if len(text_list) == 0:
+                return current_score
+            else:
+                box_list = anchor.get_nearest(text_list)
+                return TextBox(*self._concat_text_boxes([box_list]))
+        elif handle == "concat_x_all":
+            dict_sorted = sorted(x.items(), key=lambda i: i[1], reverse=False) if len(x) > 1 else list(x.items())
+            text_list = [text_box_list[i] for i, loc in dict_sorted]
+            if len(text_list) == 0:
+                return current_score
+            else:
+                return TextBox(*self._concat_text_boxes(text_list))
         elif handle == "concat_y":
             dict_sorted = sorted(y.items(), key=lambda i: i[1], reverse=False) if len(y) > 1 else list(y.items())
             text_list = [text_box_list[i] for i, loc in dict_sorted]
+            siamese_threshold = 0.6
             text_list = [box for box in text_list if self.data[field].siamese_ratio(box) > siamese_threshold]
-            return TextBox(*self._concat_text_boxes(text_list))
+            if len(text_list) == 0:
+                return current_score
+            else:
+                text_list = anchor.get_nearest(text_list)
+                return TextBox(*self._concat_text_boxes(text_list))
         elif handle == "drop_illegal":
             return current_score if current_score in text_box_list else None
         elif handle == "nearest":
@@ -537,6 +554,7 @@ class DataHandle(object):
         elif handle == "pick":
             dict_sorted = sorted(x.items(), key=lambda i: i[1], reverse=False) if len(x) > 1 else list(x.items())
             text_list = [text_box_list[i] for i, loc in dict_sorted]
+            siamese_threshold = 0.6
             text_list = [box for box in text_list if self.data[field].siamese_ratio(box) > siamese_threshold]
             if len(text_list):
                 if isinstance(direction, list):
@@ -581,12 +599,19 @@ class DataHandle(object):
             command, loc, char = handle
             if char not in text and command == "insert":
                 return text[:loc] + char + text[loc:]
-            if char in text and command == "slice":
-                index = text.index(char)
-                if loc == "before":
+            if command == "slice":
+                if char == 'start':
+                    index = int(loc)
                     return text[:index]
-                elif loc == "after":
-                    return text[index + 1:]
+                elif char == 'end':
+                    index = -int(loc)
+                    return text[index:]
+                elif char in text:
+                    index = text.index(char)
+                    if loc == "before":
+                        return text[:index]
+                    elif loc == "after":
+                        return text[index + 1:]
             if command == "type":
                 if char == 'num':
                     if loc == 'int':
@@ -613,6 +638,7 @@ class DataHandle(object):
                 elif char == 'CARR_NO':
                     text = text.replace('o', '0').replace('I', '1')
                 elif char == 'S_UNINO':
+                    text = text.replace('o', '0').replace('I', '1').replace('O', '0').replace('S', '9')
                     if len(text) > 8:
                         if len(text) == 10:
                             text = text[1:9]
@@ -624,8 +650,21 @@ class DataHandle(object):
                     if len(text) != 1:
                         if loc == 'not':
                             text = re.findall('[^\u4e00-\u9fa5]', text)[0] if len(re.findall('[^\u4e00-\u9fa5]', text)) else ''
+                        elif loc == 'no':
+                            text = re.findall('[^\u4e00-\u9fa5]', text) if len(re.findall('[^\u4e00-\u9fa5]', text)) else ''
+                            text = ''.join(text)
                         else:
                             text = re.findall('[\u4e00-\u9fa5]', text)[0]
+                elif char == 'money':
+                    if loc == 'int':
+                        text = text.replace('.', '').replace(',', '')
+                    elif loc == 'float':
+                        numlist = re.split('\.|,|。|，', text)
+                        text = ''
+                        for index, num in enumerate(numlist):
+                            if index == len(numlist) - 1:
+                                num = num.replace('0', '')
+                            text += num
         return text
 
     def _output_handle(self, text, handles):

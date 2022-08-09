@@ -430,7 +430,10 @@ def decodeDisplay(image):
 
 
 def resizetodecode(img, cmd, index):
-    abs_path = '/home/attnroot/attn_ocr/app/qrcode/'
+    if FLAGS.image_dir is not None:
+        abs_path = FLAGS.image_dir
+    else:
+        abs_path = '/home/attnroot/attn_ocr/app/qrcode'
     print(abs_path)
     resize = preprocess2decode(img, cmd)
     im, rects_list, polygon_points_list, QR_info = decodeDisplay(resize)
@@ -550,6 +553,5 @@ if __name__ == '__main__':
     FLAGS.use_dynamic_shape = False
     FLAGS.use_gpu = False
     FLAGS.threshold = 0.5
-    FLAGS.cpu_threads = 10
     FLAGS.enable_mkldnn = True
     main()

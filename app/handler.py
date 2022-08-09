@@ -21,6 +21,7 @@ import app.maskrcnn_utils as rcnn_utils
 # import matplotlib.pyplot as plt
 import skimage.io
 import app.maskrcnn_config as rcnn_config
+import re
 
 ##
 logger = logging.getLogger(__name__)
@@ -374,7 +375,7 @@ class MultiOutputParser(object):
 
 
 def checkdata(im_type, im_dict):
-    if im_type == 'invoice_A5':
+    if im_type == 'invoice_A5' or im_type == 'invoice_A4':
         if im_dict['TAX_ID1'] != '':
             im_dict['TAX_ID1'] = 'V'
             # im_dict['TAX'] = str(int(im_dict['AMTN']) - int(im_dict['AMTN_NET']))
@@ -386,6 +387,81 @@ def checkdata(im_type, im_dict):
                 im_dict['TAX_ID3'] = 'V'
                 im_dict['TAX_ID2'] = ''
     return im_dict
+
+
+def check_extradata(im_type, ext_dict):
+    if im_type == 'invoice_ey':
+        if 'INV_NO2' in ext_dict:
+            result = ext_dict['INV_NO2']
+            result = result.replace(" ", "").replace("６", "6").replace("３", "3").replace("０", "0")
+            ext_dict['INV_NO2'] = result
+        else:
+            ext_dict['INV_NO2'] = ''
+    if im_type == 'invoice_sy':
+        if 'YYMM' in ext_dict:
+            result = ext_dict['YYMM']
+            # 过滤int类型
+            text = ''.join(re.findall(r"\d+?\d*", result))
+            ext_dict['YYMM'] = check_yymm(text, False)
+        else:
+            ext_dict['YYMM'] = ''
+    if im_type == 'invoice_sk':
+        if 'INV_NO1' in ext_dict:
+            # 只保留字母
+            alpha = ''.join(re.split(r'[^A-Za-z]', ext_dict['INV_NO1']))
+            ext_dict['INV_NO1'] = alpha
+        else:
+            ext_dict['INV_NO1'] = ''
+        if 'MM' in ext_dict:
+            result = ext_dict['MM']
+            # 过滤int类型
+            text = ''.join(re.findall(r"\d+?\d*", result))
+            ext_dict['MM'] = check_yymm(text, True)
+        else:
+            ext_dict['MM'] = ''
+    return ext_dict
+
+
+def check_yymm(yymm, mm):
+    yy = mm = ''
+    if len(yymm) == 5:
+        yy = yymm[:3]
+        max_mm = yymm[-1:]
+        if max_mm == '2':
+            mm = '12'
+        if max_mm == '4':
+            mm = '34'
+        if max_mm == '6':
+            mm = '56'
+        if max_mm == '8':
+            mm = '78'
+    elif len(yymm) == 6:
+        yy = yymm[:3]
+        max_mm = yymm[-2:]
+        if max_mm == '10':
+            mm = '910'
+    elif len(yymm) == 7:
+        yy = yymm[:3]
+        max_mm = yymm[-2:]
+        if max_mm == '12':
+            mm = '1112'
+    elif len(yymm) < 5:
+        if yymm == '':
+            mm = ''
+        else:
+            yy = yymm[:-2]
+            max_mm = yymm[-1:]
+            if int(max_mm) % 2 == 0:
+                min_mm = int(max_mm) - 1
+                mm = str(min_mm) + max_mm
+            else:
+                min_mm = max_mm
+                max_mm = int(max_mm) + 1
+                mm = min_mm + str(max_mm)
+    if mm:
+        return mm
+    else:
+        return yy + mm
 
 
 class PaddleOutputParser(object):
@@ -446,13 +522,16 @@ class PaddleMutiOutputParser(object):
             for i in range(len(self.predicts)):
                 self.fp_dict = {}
                 self.fp_dict['InvoiceType'] = self.predicts[i]['im_type']
-                self.fp_dict['InvoiceExtra'] = self.predicts[i]['extra']
+                self.fp_dict['InvoiceExtra'] = check_extradata(self.predicts[i]['im_type'], self.predicts[i]['extra'])
                 self.fp_dict['RequestId'] = self._decode()
                 self.fp_dict['Code'] = self.code
                 self.fp_dict['Message'] = 'Success' if self.code == '200' else 'Error'
-                if self.predicts[i]:
-                    self.fp_dict["InvoiceInfos"] = checkdata(self.predicts[i]['im_type'], {k: v for k, v in self.predicts[i]['result'].items() if
-                                                                                 not k.startswith('__')})
+                self.fp_dict['InvoiceResult'] = self.predicts[i]['result']
+                if len(self.predicts[i]['result']):
+                    for j in range(len(self.predicts[i]['result'])):
+                        self.fp_dict["InvoiceInfos"] = checkdata(self.predicts[i]['im_type'],
+                                                                 {k: v for k, v in self.predicts[i]['result'][j].items() if
+                                                                  not k.startswith('__')})
                 else:
                     self.fp_dict["InvoiceInfos"] = []
                 self.response.append(self.fp_dict)
@@ -468,8 +547,8 @@ class PaddleMutiOutputParser(object):
                 self.response.append(self.fp_dict)
         """
         print("InvoiceInfos: ", self.fp_dict["InvoiceInfos"])
-
         return self.response
+
 
 class PaddleCHOutputParser(object):
 

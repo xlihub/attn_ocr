@@ -20,6 +20,8 @@ import time
 import random
 import os
 import imutils
+from datetime import datetime
+from cffi.backend_ctypes import long
 
 from app.key_dicts import ALPHABET
 import subprocess
@@ -236,15 +238,51 @@ def _cal_edge_length(points):
     return min(distanse)
 
 
-def prepare_images(img):
+def datetime_to_strtime(datetime_obj):
+    """将 datetime 格式的时间 (含毫秒) 转为字符串格式
+    :param datetime_obj: {datetime}2016-02-25 20:21:04.242000
+    :return: {str}'2016-02-25 20:21:04.242'
+    """
+
+    local_str_time = datetime_obj.strftime("%Y-%m-%d %H:%M:%S.%f")
+    return local_str_time
+
+
+def datetime_to_timestamp(datetime_obj):
+    """将本地(local) datetime 格式的时间 (含毫秒) 转为毫秒时间戳
+    :param datetime_obj: {datetime}2016-02-25 20:21:04.242000
+    :return: 13 位的毫秒时间戳 1456402864242
+    """
+
+    local_timestamp = long(time.mktime(datetime_obj.timetuple()) * 1000.0 + datetime_obj.microsecond / 1000.0)
+    return local_timestamp
+
+
+def current_datetime():
+    """返回本地当前时间, 包含datetime 格式, 字符串格式, 时间戳格式
+    :return: (datetime 格式, 字符串格式, 时间戳格式)
+    """
+
+    # 当前时间：datetime 格式
+    local_datetime_now = datetime.now()
+
+    # 当前时间：字符串格式，需要调用方法3
+    local_strtime_now = datetime_to_strtime(local_datetime_now)
+
+    # 当前时间：时间戳格式 13位整数，需要调用方法4
+    local_timestamp_now = datetime_to_timestamp(local_datetime_now)
+
+    return local_datetime_now, local_strtime_now, local_timestamp_now
+
+
+def prepare_images(img, raw_path):
     is_list = False
     if isinstance(img, list):
         results_list = []
         for index, pil_img in enumerate(img):
-            raw_path = '/home/attnroot/attn_ocr/app/qrcode/rawImages'
             if not os.path.exists(raw_path):
                 os.makedirs(raw_path)
-            img_path = '/home/attnroot/attn_ocr/app/qrcode/rawImages/raw_' + str(index) + '.jpg'
+            img_path = raw_path + '/raw_' + str(index) + '.jpg'
             pil_img.save(img_path)
             qrcode_result = predict_bar_image([img_path])
             results = []
@@ -273,8 +311,8 @@ def prepare_images(img):
         return is_list, results
 
 
-def qrcode_dewarp(pil_img):
-    is_list, results = prepare_images(pil_img)
+def qrcode_dewarp(pil_img, raw_path):
+    is_list, results = prepare_images(pil_img, raw_path)
     # 将训练日志写入out.log与err.log文件
     mode = 'w'
     dst_path = '/home/attnroot/attn_ocr/app/qrcode/'
@@ -289,7 +327,7 @@ def qrcode_dewarp(pil_img):
 
     if is_list:
         train = subprocess.Popen(
-            args='/home/attnroot/anaconda3/envs/invoiceocr/bin/python /home/attnroot/attn_ocr/app/qrcode/infer_qr.py --image_dir=/home/attnroot/attn_ocr/app/qrcode/rawImages',
+            args='/home/attnroot/anaconda3/envs/invoiceocr/bin/python /home/attnroot/attn_ocr/app/qrcode/infer_qr.py --image_dir=%s' % raw_path,
             shell=True, stdout=outlog, stderr=errlog, universal_newlines=True,
             encoding='utf-8')
     else:
@@ -305,7 +343,7 @@ def qrcode_dewarp(pil_img):
             break
     if is_list:
         for index, result in enumerate(results):
-            txt_path = '/home/attnroot/attn_ocr/app/qrcode/rawImages/raw_' + str(index) + '_result.txt'
+            txt_path = raw_path + '/raw_' + str(index) + '_result.txt'
             result = get_qrcode_results(txt_path, result)
             results[index] = result
     else:

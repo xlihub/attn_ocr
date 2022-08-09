@@ -570,6 +570,22 @@ class DataHandle(object):
                 return text_list
             else:
                 return anchor
+        elif handle == "find":
+            dict_sorted = sorted(x.items(), key=lambda i: i[1], reverse=False) if len(x) > 1 else list(x.items())
+            text_list = [text_box_list[i] for i, loc in dict_sorted]
+            siamese_threshold = 0.6
+            siamese = 0
+            best_box = 0
+            if len(text_list):
+                for box in text_list:
+                    box_siamese = self.data[field].siamese_ratio(box)
+                    if box_siamese > siamese_threshold:
+                        if box_siamese - siamese > 0:
+                            siamese = box_siamese
+                            best_box = box
+                return best_box
+            else:
+                return anchor
 
     def _get_fist_anchor(self, anchors):
         if not isinstance(anchors, list):
@@ -665,6 +681,46 @@ class DataHandle(object):
                             if index == len(numlist) - 1:
                                 num = num.replace('0', '')
                             text += num
+                elif char == 'M-M':
+                    yy = mm = ''
+                    if len(text) == 5:
+                        yy = text[:3]
+                        max_mm = text[-1:]
+                        if max_mm == '2':
+                            mm = '12'
+                        if max_mm == '4':
+                            mm = '34'
+                        if max_mm == '6':
+                            mm = '56'
+                        if max_mm == '8':
+                            mm = '78'
+                    elif len(text) == 6:
+                        yy = text[:3]
+                        max_mm = text[-2:]
+                        if max_mm == '10':
+                            mm = '910'
+                    elif len(text) == 7:
+                        yy = text[:3]
+                        max_mm = text[-2:]
+                        if max_mm == '12':
+                            mm = '1112'
+                    elif len(text) < 5:
+                        if text == '':
+                            mm = ''
+                        else:
+                            yy = text[:-2]
+                            max_mm = text[-1:]
+                            if int(max_mm) % 2 == 0:
+                                min_mm = int(max_mm) - 1
+                                mm = str(min_mm) + max_mm
+                            else:
+                                min_mm = max_mm
+                                max_mm = int(max_mm) + 1
+                                mm = min_mm + str(max_mm)
+                    if loc == 'YY':
+                        text = yy + mm
+                    else:
+                        text = mm
         return text
 
     def _output_handle(self, text, handles):

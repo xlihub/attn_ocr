@@ -312,7 +312,6 @@ def get_invoice_pattern():
     for pattern in patterns:
         invoice_pattern[pattern.name] = pattern.config
         special_handle[pattern.name] = pattern.special_handle
-    print('_____')
     return invoice_pattern
 
 
@@ -327,7 +326,6 @@ def get_special_handle():
     patterns = session.query(Pattern).all()
     for pattern in patterns:
         special_handle[pattern.name] = pattern.special_handle
-    print('_____')
     return special_handle
 
 
@@ -342,7 +340,6 @@ def get_output_handle():
     patterns = session.query(Pattern).all()
     for pattern in patterns:
         output_handle[pattern.name] = pattern.output_handle
-    print('_____')
     return output_handle
 
 
@@ -357,7 +354,6 @@ def get_extra():
     patterns = session.query(Pattern).all()
     for pattern in patterns:
         extra[pattern.name] = pattern.extra
-    print('_____')
     return extra
 # invoice_pattern = {
 #     "train_ticket_tw": {

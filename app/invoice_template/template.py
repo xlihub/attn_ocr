@@ -68,7 +68,6 @@ def get_examples():
     templates = session.query(Template).all()
     for template in templates:
         examples[template.name] = template.config
-    print('______')
     return examples
 # examples = {
 #     "train_ticket_tw": {

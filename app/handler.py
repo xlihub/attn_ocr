@@ -378,14 +378,18 @@ def checkdata(im_type, im_dict):
     if im_type == 'invoice_A5' or im_type == 'invoice_A4':
         if im_dict['TAX_ID1'] != '':
             im_dict['TAX_ID1'] = 'V'
+            im_dict['TAX_ID2'] = ''
+            im_dict['TAX_ID3'] = ''
             # im_dict['TAX'] = str(int(im_dict['AMTN']) - int(im_dict['AMTN_NET']))
         elif im_dict['TAX_ID2'] != '':
             im_dict['TAX_ID2'] = 'V'
-            im_dict['TAX'] = '0'
-            im_dict['AMTN'] = im_dict['AMTN_NET']
+            im_dict['$TAX'] = '0'
+            im_dict['AMTN'] = im_dict['$AMTN_NET']
             if im_dict['TAX_ID3'] != '':
                 im_dict['TAX_ID3'] = 'V'
                 im_dict['TAX_ID2'] = ''
+                im_dict['$TAX'] = '0'
+                im_dict['AMTN'] = im_dict['$AMTN_NET']
     return im_dict
 
 
@@ -466,12 +470,16 @@ def check_yymm(yymm, mm):
 
 class PaddleOutputParser(object):
 
-    def __init__(self, inputs, predicts):
+    def __init__(self, inputs, predicts, text_dict, boxes_dict, score_dict, mask_dict):
         # print("print(len(predicts)):",len(predicts))
         self.inputs = inputs
         self.predicts = predicts
         self.code = '200'
         self.response = []
+        self.text_dict = text_dict
+        self.boxes_dict = boxes_dict
+        self.score_dict = score_dict
+        self.mask_dict = mask_dict
 
     def _decode(self, expire=36000):
         ts_str = str(time.time() + expire)
@@ -489,6 +497,11 @@ class PaddleOutputParser(object):
         self.fp_dict['Code'] = self.code
         self.fp_dict['Message'] = 'Success' if self.code == '200' else 'Error'
         self.fp_dict['InvoiceResult'] = self.predicts['result']
+        self.fp_dict['rawText'] = self.text_dict
+        self.fp_dict['rawBoxes'] = self.boxes_dict
+        self.fp_dict['rawScore'] = self.score_dict
+        self.fp_dict['rawMask'] = self.mask_dict
+        # self.fp_dict['InvoiceResultImage'] = utils.image_to_base64('result.jpg', '/home/cpard/ppocr/inference_results/', prefix='data:image/jpeg;base64,')
         if len(self.predicts['result']):
             for i in range(len(self.predicts['result'])):
                 self.fp_dict["InvoiceInfos"] = checkdata(self.predicts['im_type'], {k: v for k, v in self.predicts['result'][i].items() if
@@ -501,13 +514,16 @@ class PaddleOutputParser(object):
 
 
 class PaddleMutiOutputParser(object):
-
-    def __init__(self, inputs, predicts):
+    def __init__(self, inputs, predicts, text_dicts, boxes_dicts, score_dicts, mask_dict):
         # print("print(len(predicts)):",len(predicts))
         self.inputs = inputs
         self.predicts = predicts
         self.code = '200'
         self.response = []
+        self.text_dicts = text_dicts
+        self.boxes_dicts = boxes_dicts
+        self.score_dicts = score_dicts
+        self.mask_dicts = mask_dict
 
     def _decode(self, expire=36000):
         ts_str = str(time.time() + expire)
@@ -527,6 +543,10 @@ class PaddleMutiOutputParser(object):
                 self.fp_dict['Code'] = self.code
                 self.fp_dict['Message'] = 'Success' if self.code == '200' else 'Error'
                 self.fp_dict['InvoiceResult'] = self.predicts[i]['result']
+                self.fp_dict['rawText'] = self.text_dicts[i]
+                self.fp_dict['rawBoxes'] = self.boxes_dicts[i]
+                self.fp_dict['rawScore'] = self.score_dicts[i]
+                self.fp_dict['rawMask'] = self.mask_dicts[i]
                 if len(self.predicts[i]['result']):
                     for j in range(len(self.predicts[i]['result'])):
                         self.fp_dict["InvoiceInfos"] = checkdata(self.predicts[i]['im_type'],

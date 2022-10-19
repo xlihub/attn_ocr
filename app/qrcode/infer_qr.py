@@ -553,5 +553,5 @@ if __name__ == '__main__':
     FLAGS.use_dynamic_shape = False
     FLAGS.use_gpu = False
     FLAGS.threshold = 0.5
-    FLAGS.enable_mkldnn = True
+    # FLAGS.enable_mkldnn = True
     main()

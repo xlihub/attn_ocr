@@ -311,11 +311,31 @@ def prepare_images(img, raw_path):
         return is_list, results
 
 
+def command(cmd, timeout=60):
+    """执行命令cmd，返回命令输出的内容。
+    如果超时将会抛出TimeoutError异常。
+    cmd - 要执行的命令
+    timeout - 最长等待时间，单位：秒
+    """
+    p = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
+    t_beginning = time.time()
+    seconds_passed = 0
+    while True:
+        if p.poll() is not None:
+            break
+        seconds_passed = time.time() - t_beginning
+        if timeout and seconds_passed > timeout:
+            p.terminate()
+            raise TimeoutError(cmd, timeout)
+        time.sleep(0.1)
+    return p.stdout.read()
+
+
 def qrcode_dewarp(pil_img, raw_path):
     is_list, results = prepare_images(pil_img, raw_path)
     # 将训练日志写入out.log与err.log文件
     mode = 'w'
-    dst_path = '/home/attnroot/attn_ocr/app/qrcode/'
+    dst_path = '/home/cpard/attn_ocr/app/qrcode/'
     outlog = open(osp.join(dst_path, 'out.log'), mode=mode, encoding='utf-8')
     errlog = open(osp.join(dst_path, 'err.log'), mode=mode, encoding='utf-8')
     outlog.write("This log file path is {}\n".format(
@@ -335,12 +355,22 @@ def qrcode_dewarp(pil_img, raw_path):
             args='/home/attnroot/anaconda3/envs/invoiceocr/bin/python /home/attnroot/attn_ocr/app/qrcode/infer_qr.py --image_file=/home/attnroot/attn_ocr/app/qrcode/raw.jpg',
             shell=True, stdout=outlog, stderr=errlog, universal_newlines=True,
             encoding='utf-8')
+    t_beginning = time.time()
+    seconds_passed = 0
+    timeout = 10
     while True:
-        flag = 1
-        if train.poll() is None:
-            flag = 0
-        if flag:
+        if train.poll() is not None:
             break
+        seconds_passed = time.time() - t_beginning
+        if timeout and seconds_passed > timeout:
+            train.terminate()
+        time.sleep(0.1)
+    # while True:
+    #    flag = 1
+    #    if train.poll() is None:
+    #        flag = 0
+    #    if flag:
+    #        break
     if is_list:
         for index, result in enumerate(results):
             txt_path = raw_path + '/raw_' + str(index) + '_result.txt'
@@ -467,6 +497,39 @@ def predict_bar_image(image_list, batch_size=1):
         #     out.write("[INFO] Found {} barcode: {}".format(type, data) + '\n')
         # out.close()
     return result_list
+
+
+# image转换成base64并加上 前缀data:image/jpeg;base64,
+def image_to_base64(filename, path, **kwargs):
+    """
+    :param filename: image文件名
+    :param path: image存放路径
+    :param kwargs: 参数prefix(转换base64后需要加上的前缀)
+    :return:
+    """
+    path = osp.join(path, filename)
+    # 转为二进制格式
+    with open(path, "rb") as f:
+        data = str(base64.b64encode(f.read()), "utf-8")
+        # 转换base64后加上前缀
+        if "prefix" in kwargs.keys():
+            data = kwargs["prefix"] + data
+            # base64_data = bytes(('data: image/jpeg;base64,%s' % str(base64.b64encode(f.read()), "utf-8")), "utf-8")
+        # 转换为bytes对象
+        # base64_data = bytes(data, "utf-8")
+        print("Succeed: %s >> 图片转换成base64" % path)
+        return data
+
+
+def score_decode(text, score):
+    score_list = []
+    for idx in range(len(score)):
+        if text[idx] in [0]:
+            continue
+        if idx > 0 and text[idx - 1] == text[idx]:
+            continue
+        score_list.append(score[idx])
+    return score_list
 
 
 def debug(fn):

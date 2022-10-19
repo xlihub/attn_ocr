@@ -7,6 +7,7 @@ import re
 from itertools import product, groupby
 import time
 import copy
+from app.utils import score_decode
 from functools import wraps
 
 
@@ -123,12 +124,13 @@ class StringMatcher:
 
 
 class TextBox(Box):
-    def __init__(self, text, x1, y1, x2, y2, original_np):
+    def __init__(self, text, x1, y1, x2, y2, original_np, original_score):
         super(TextBox, self).__init__(x1, y1, x2, y2)
         text = text.replace(' ', '')  # 去除字符串中的空格
         self.text = text
         self.split_flag = False
         self.original_np = original_np
+        self.original_score = original_score
         self.text_original = "".join(self.decode_score(original=True))
         self.decode_text = "".join([siamese_decode[char] if char in siamese_decode else char for char in self.text])
 
@@ -218,7 +220,7 @@ class TextBox(Box):
         else:
             return self.text
 
-    def update(self, text, x1, y1, x2, y2, original_np):
+    def update(self, text, x1, y1, x2, y2, original_np, original_score):
         self.text = text
         self.x1 = x1
         self.y1 = y1
@@ -229,6 +231,7 @@ class TextBox(Box):
         self.height = abs(y1 - y2)
         self.center, (self.x, self.y) = self._get_center(), self._get_center()
         self.original_np = original_np
+        self.original_score = original_score
         self.text_original = "".join(self.decode_score(original=True))
         self.decode_text = "".join([siamese_decode[char] if char in siamese_decode else char for char in self.text])
 
@@ -238,12 +241,16 @@ class TextBox(Box):
         end = start + len(substr)
         np_start, np_end = self._get_np_index(start, end)
         loc_start, loc_end = self._get_loc_by_index(len(self.text), start, end)
-        before_box = TextBox(self.text[:start], self.x1, self.y1, loc_start, self.y2, self.original_np[:np_start])
+        before_box = TextBox(self.text[:start], self.x1, self.y1, loc_start, self.y2, self.original_np[:np_start], self.original_score[:np_start])
         end_box = TextBox(self.text[end:], loc_end, self.y1, self.x2, self.y2,
-                          np.concatenate([self.original_np[:ctc_padding], self.original_np[np_end:]], axis=0))
+                          np.concatenate([self.original_np[:ctc_padding], self.original_np[np_end:]], axis=0),
+                          np.concatenate([self.original_score[:ctc_padding], self.original_score[np_end:]], axis=0))
         mid_box = {'text': self.text[start:end], 'x1': loc_start, 'y1': self.y1, 'x2': loc_end, 'y2': self.y2,
                    'original_np': np.concatenate(
-                       [self.original_np[:ctc_padding], self.original_np[np_start:np_end]], axis=0)}
+                       [self.original_np[:ctc_padding], self.original_np[np_start:np_end]], axis=0),
+                   'original_score': np.concatenate(
+                       [self.original_score[:ctc_padding], self.original_score[np_start:np_end]], axis=0)
+                   }
         self.split_flag = True
         return before_box, mid_box, end_box
 
@@ -402,11 +409,12 @@ class DataHandle(object):
                    {'trigger': 'terminal', 'source': States.field_done, 'dest': States.terminal,
                     'prepare': '_terminal'}]
 
-    def __init__(self, ocr, box, ocr_original, invoice_type, invoice_direction_filter, debug=False, debug_filter=None,
+    def __init__(self, ocr, box, ocr_original, score_original, invoice_type, invoice_direction_filter, debug=False, debug_filter=None,
                  bool_require=True, double_fix=False, x_threshold=2, y_threshold=2):
         self.ocr = ocr.copy()
         self.box = box.copy()
         self.ocr_original = ocr_original.copy()
+        self.score_original = score_original.copy()
         self.invoice_type = invoice_type if invoice_type in get_invoice_pattern() else "common"
         self.debug = debug
         self.debug_filter = debug_filter
@@ -424,10 +432,11 @@ class DataHandle(object):
         self.special_handle = get_special_handle().get(self.invoice_type, {})
         self.direction_filter = invoice_direction_filter.get(self.invoice_type, {})
         self.output_handle = get_output_handle().get(self.invoice_type, {})
+        self.check_symbol = []
         self.machine = Machine(model=self, states=States, transitions=DataHandle.transitions, initial=States.prepare)
 
     def _prepare(self):
-        self.text_boxes = [TextBox(text, *self.box[i], self.ocr_original[i]) for i, text in enumerate(self.ocr)]
+        self.text_boxes = [TextBox(text, *self.box[i], self.ocr_original[i], self.score_original[i]) for i, text in enumerate(self.ocr)]
         self.data = {field: Field(decode, field) for field, decode in self.requirement.items()}
         for field_obj in self.data.values():
             field_obj.prepare(self.text_boxes)
@@ -504,7 +513,7 @@ class DataHandle(object):
         self._vote_direction(self._get_current_score())
 
     def _concat_text_boxes(self, text_list):
-        text, x, y, np_array = [], [], [], []
+        text, x, y, np_array, score_array = [], [], [], [], []
         for index, i in enumerate(text_list):
             text.append(i.text)
             x.append(i.x1)
@@ -512,7 +521,8 @@ class DataHandle(object):
             y.append(i.y1)
             y.append(i.y2)
             np_array.append(i.original_np[ctc_padding:]) if index > 0 else np_array.append(i.original_np)
-        return "".join(text), min(x), min(y), max(x), max(y), np.concatenate(np_array, axis=0)
+            score_array.append(i.original_score[ctc_padding:]) if index > 0 else score_array.append(i.original_score)
+        return "".join(text), min(x), min(y), max(x), max(y), np.concatenate(np_array, axis=0), np.concatenate(score_array, axis=0)
 
     def _handle_by(self, handle, text_box_list, current_score, field, anchor, direction, siamese_threshold=0.9):
         x = {i: textbox.x for i, textbox in enumerate(text_box_list)}
@@ -610,7 +620,7 @@ class DataHandle(object):
                                                                 field, anchor_box, direction) if box_list else None
                     # print(self.current_score[field].text)
 
-    def _text_handle(self, text, handle):
+    def _text_handle(self, text, handle, field, score):
         if handle:
             command, loc, char = handle
             if char not in text and command == "insert":
@@ -721,13 +731,22 @@ class DataHandle(object):
                         text = yy + mm
                     else:
                         text = mm
+            if command == "check":
+                if char == 'symbol':
+                    if loc == 'money':
+                        if len(score):
+                            if score[0] < 0.9:
+                                self.check_symbol.append({'check': True, 'text': text, 'field': field})
+                            else:
+                                self.check_symbol.append({'check': False, 'text': text, 'field': field})
         return text
 
-    def _output_handle(self, text, handles):
+    def _output_handle(self, text, handles, field, score):
         text_ = copy.copy(text)
+        score_ = copy.copy(score)
         for handle in handles:
             # print(text_)
-            text_ = self._text_handle(text_, handle)
+            text_ = self._text_handle(text_, handle, field, score_)
             # print("@",text_)
         return text_
 
@@ -749,9 +768,20 @@ class DataHandle(object):
                 terminal[field] = self.current_score[field].decode_score(field_obj.mask)
                 # print(terminal[field])
                 if self.output_handle:
-                    terminal[field] = self._output_handle(terminal[field], self.output_handle.get(field, []))
+                    field_box = self.current_score[field]
+                    text = field_box.original_np
+                    score = field_box.original_score
+                    score_list = score_decode(text, score)
+                    terminal[field] = self._output_handle(terminal[field], self.output_handle.get(field, []), field, score_list)
             else:
                 terminal[field] = ""
+        # 校验方法，当所有金额栏位第一位字符都低于阈值时，将第一位截掉
+        if len(self.check_symbol):
+            check_data = list(filter(lambda c: c['check'], self.check_symbol))
+            if len(check_data) == len(self.check_symbol):
+                for item in self.check_symbol:
+                    text = item['text']
+                    terminal[item['field']] = text[1:]
         return terminal
 
     def _check_anchor(self, least=1):
@@ -768,17 +798,21 @@ class DataHandle(object):
     def _check_field(self):
         score = self._get_current_score()
         self.tries += 1
+        # print(self.state)
         if self.current_score == score:
             return True
         elif self.tries > max_try:  # 10次必进box分割
             self.tries = 0
+            if self.state == States.field_progress:
+                self.machine.set_state('split_box')
             return True
         else:
             self.current_score = score
             return False
 
     def _reverse_check_field(self):
-        return not self._check_field()
+        state = not self._check_field()
+        return state
 
     def extract(self):
         now = time.time()

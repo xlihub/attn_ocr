@@ -71,6 +71,10 @@ def predict(item: PaddleItem):
         else:
             res = ast.literal_eval(im_type)
             results = []
+            text_dicts = []
+            boxes_dicts = []
+            score_dicts = []
+            mask_dicts = []
             extra_results =[]
             for index, preb_dict in enumerate(res):
                 if preb_dict['im_type'] == 'extra':
@@ -94,12 +98,14 @@ def predict(item: PaddleItem):
                     text_dict = ast.literal_eval(preb_dict['text'])
                     boxes_dict = ast.literal_eval(preb_dict['boxes'])
                     im_type = preb_dict['im_type']
+                    score_dict = ast.literal_eval(preb_dict['score'])
+                    mask_dict = ast.literal_eval(preb_dict['mask_list'])
                     # dic = pb2dict(predicts)
                     response = {'text': str(text_dict)}
                     print(text_dict)
                     # print(data)
                     direction_filter = get_direction_filter(get_examples())
-                    state, predict_result = DataHandle(text_dict, boxes_dict, preb_list, im_type, direction_filter,
+                    state, predict_result = DataHandle(text_dict, boxes_dict, preb_list, score_dict, im_type, direction_filter,
                                                        True).extract()
                     print(state, predict_result)
                     if state == 'Failed':
@@ -118,7 +124,11 @@ def predict(item: PaddleItem):
                         else:
                             predicts_dict = {'result': [predict_result], 'im_type': im_type, 'extra': {}}
                     results.append(predicts_dict)
-            output_parser = PaddleMutiOutputParser(item, results)
+                    text_dicts.append(text_dict)
+                    boxes_dicts.append(boxes_dict)
+                    score_dicts.append(score_dict)
+                    mask_dicts.append(mask_dict)
+            output_parser = PaddleMutiOutputParser(item, results, text_dicts, boxes_dicts, score_dicts, mask_dicts)
             # output_parser = TxOutputParser(item, *predicts)
             response = output_parser.parse_output()
     else:
@@ -133,12 +143,23 @@ def predict(item: PaddleItem):
         text_dict = ast.literal_eval(predicts.value[0])
         boxes_dict = ast.literal_eval(predicts.value[2])
         im_type = predicts.value[3]
+        score_dict = ast.literal_eval(predicts.value[4])
+        raw_score = ast.literal_eval(predicts.value[5])
+        mask_dict = ast.literal_eval(predicts.value[6])
+        score_list = []
+        for preb_str in raw_score:
+            by = preb_str['bytes']
+            dtype = preb_str['dtype']
+            preb = np.frombuffer(by, dtype=dtype)
+            preb = preb.reshape(preb_str['shape'])
+            score_list.append(preb)
+
         # dic = pb2dict(predicts)
-        response = {'text': str(text_dict)}
+        # response = {'text': str(text_dict)}
         print(text_dict)
         # print(data)
         direction_filter = get_direction_filter(get_examples())
-        state, predict_result = DataHandle(text_dict, boxes_dict, preb_list, im_type, direction_filter,
+        state, predict_result = DataHandle(text_dict, boxes_dict, preb_list, score_list, im_type, direction_filter,
                                            True).extract()
         print(state, predict_result)
         if state == 'Failed':
@@ -157,7 +178,7 @@ def predict(item: PaddleItem):
             else:
                 predicts = {'result': [predict_result], 'im_type': im_type, 'extra': {}}
             # predicts = [predicts_dict]
-        output_parser = PaddleOutputParser(item, predicts)
+        output_parser = PaddleOutputParser(item, predicts, text_dict, boxes_dict, score_dict, mask_dict)
         # output_parser = TxOutputParser(item, *predicts)
         response = output_parser.parse_output()
     return response

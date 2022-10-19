@@ -41,7 +41,7 @@ def decode_qrcode(item: PaddleItem):
     if item.ImageList is not None:
         datetime, strtime, timestamp = utils.current_datetime()
         timestamp = '_' + str(timestamp)
-        raw_path = '/home/attnroot/attn_ocr/app/qrcode/rawImages' + timestamp
+        raw_path = '/home/cpard/attn_ocr/app/qrcode/rawImages' + timestamp
         imagelist = []
         for base64 in item.ImageList:
             img = utils.read_img_from_base64(base64, 'pil')

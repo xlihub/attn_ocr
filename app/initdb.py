@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, JSON
 
-engine = create_engine('sqlite:////home/attnroot/attn_ocr/data.db?check_same_thread=False', echo=True)
+engine = create_engine('sqlite:////home/cpard/attn_ocr/data.db?check_same_thread=False', echo=True)
 
 Base = declarative_base()
 

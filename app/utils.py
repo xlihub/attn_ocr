@@ -297,7 +297,7 @@ def prepare_images(img, raw_path):
         is_list = True
         return is_list, results_list
     else:
-        img_path = '/home/attnroot/attn_ocr/app/qrcode/raw.jpg'
+        img_path = '/home/cpard/attn_ocr/app/qrcode/raw.jpg'
         img.save(img_path)
         qrcode_result = predict_bar_image([img_path])
         results = []
@@ -347,12 +347,12 @@ def qrcode_dewarp(pil_img, raw_path):
 
     if is_list:
         train = subprocess.Popen(
-            args='/home/attnroot/anaconda3/envs/invoiceocr/bin/python /home/attnroot/attn_ocr/app/qrcode/infer_qr.py --image_dir=%s' % raw_path,
+            args='/home/cpard/anaconda3/envs/invoiceocr/bin/python /home/cpard/attn_ocr/app/qrcode/infer_qr.py --image_dir=%s' % raw_path,
             shell=True, stdout=outlog, stderr=errlog, universal_newlines=True,
             encoding='utf-8')
     else:
         train = subprocess.Popen(
-            args='/home/attnroot/anaconda3/envs/invoiceocr/bin/python /home/attnroot/attn_ocr/app/qrcode/infer_qr.py --image_file=/home/attnroot/attn_ocr/app/qrcode/raw.jpg',
+            args='/home/cpard/anaconda3/envs/invoiceocr/bin/python /home/cpard/attn_ocr/app/qrcode/infer_qr.py --image_file=/home/cpard/attn_ocr/app/qrcode/raw.jpg',
             shell=True, stdout=outlog, stderr=errlog, universal_newlines=True,
             encoding='utf-8')
     t_beginning = time.time()
@@ -377,7 +377,7 @@ def qrcode_dewarp(pil_img, raw_path):
             result = get_qrcode_results(txt_path, result)
             results[index] = result
     else:
-        txt_path = "/home/attnroot/attn_ocr/app/qrcode/raw_result.txt"
+        txt_path = "/home/cpard/attn_ocr/app/qrcode/raw_result.txt"
         results = get_qrcode_results(txt_path, results)
     return results
 
@@ -393,8 +393,8 @@ def get_qrcode_results(txt_path, results):
             results.append({type: line})
             index += 1
         f.close()
-    # os.remove('/home/attnroot/attn_ocr/app/qrcode/raw.jpg')
-    # os.remove("/home/attnroot/attn_ocr/app/qrcode/raw_result.txt")
+    # os.remove('/home/cpard/attn_ocr/app/qrcode/raw.jpg')
+    # os.remove("/home/cpard/attn_ocr/app/qrcode/raw_result.txt")
     return results
 
 

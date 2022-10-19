@@ -15,7 +15,7 @@ from paddle.inference import Config
 from paddle.inference import create_predictor
 from PIL import Image, ImageEnhance
 import random
-sys.path.append('/home/attnroot/attn_ocr')
+sys.path.append('/home/cpard/attn_ocr')
 from app.qrcode.preprocess import preprocess, Resize, NormalizeImage, Permute, PadStride
 from app.qrcode.visualize import visualize_box_mask
 from app.qrcode.utils import argsparser, Timer, get_current_memory_mb
@@ -433,7 +433,7 @@ def resizetodecode(img, cmd, index):
     if FLAGS.image_dir is not None:
         abs_path = FLAGS.image_dir
     else:
-        abs_path = '/home/attnroot/attn_ocr/app/qrcode'
+        abs_path = '/home/cpard/attn_ocr/app/qrcode'
     print(abs_path)
     resize = preprocess2decode(img, cmd)
     im, rects_list, polygon_points_list, QR_info = decodeDisplay(resize)

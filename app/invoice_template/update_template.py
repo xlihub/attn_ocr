@@ -79,7 +79,7 @@ def update_temp():
     # 创建Session类实例
     session = Session()
 
-    src_dir_list = glob('/home/attnroot/ftp/upload/new_template/' + '*')
+    src_dir_list = glob('/home/cpard/ftp/upload/new_template/' + '*')
     examples = {}
     for src_file in src_dir_list:
         # Opening JSON file

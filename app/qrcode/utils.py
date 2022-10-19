@@ -23,7 +23,7 @@ def argsparser():
     parser.add_argument(
         "--model_dir",
         type=str,
-        default='/home/attnroot/attn_ocr/app/qrcode/ppyolo_mbv3_large_qr',
+        default='/home/cpard/attn_ocr/app/qrcode/ppyolo_mbv3_large_qr',
         help=("Directory include:'model.pdiparams', 'model.pdmodel', "
               "'infer_cfg.yml', created by tools/export_model.py.")
     )

@@ -331,7 +331,7 @@ def command(cmd, timeout=60):
     return p.stdout.read()
 
 
-def qrcode_dewarp(pil_img, raw_path):
+def qrcode_dewarp(pil_img, raw_path=None):
     is_list, results = prepare_images(pil_img, raw_path)
     # 将训练日志写入out.log与err.log文件
     mode = 'w'

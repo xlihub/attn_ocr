@@ -335,7 +335,7 @@ def qrcode_dewarp(pil_img, raw_path=None):
     is_list, results = prepare_images(pil_img, raw_path)
     # 将训练日志写入out.log与err.log文件
     mode = 'w'
-    dst_path = '/home/cpard/attn_ocr/app/qrcode/'
+    dst_path = '/home/attnroot/attn_ocr/app/qrcode/'
     outlog = open(osp.join(dst_path, 'out.log'), mode=mode, encoding='utf-8')
     errlog = open(osp.join(dst_path, 'err.log'), mode=mode, encoding='utf-8')
     outlog.write("This log file path is {}\n".format(

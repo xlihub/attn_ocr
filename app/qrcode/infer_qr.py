@@ -507,9 +507,20 @@ def predict_image(detector, image_list, batch_size=1):
                 roi = img[ymin:ymax, xmin: xmax]
                 im, rects_list, polygon_points_list, QR_info = decodeDisplay(roi)
                 if len(QR_info) == 0:
-                    QR_info = resizetodecode(roi, 'resize400', index)
-                    if len(QR_info) == 0:
-                        QR_info = resizetodecode(roi, 'resize1000', index)
+                    detect_obj = cv2.wechat_qrcode_WeChatQRCode(
+                        '/home/cpard/attn_ocr/app/qrcode/wechat/detect.prototxt',
+                        '/home/cpard/attn_ocr/app/qrcode/wechat/detect.caffemodel',
+                        '/home/cpard/attn_ocr/app/qrcode/wechat/sr.prototxt',
+                        '/home/cpard/attn_ocr/app/qrcode/wechat/sr.caffemodel')
+                    res, points = detect_obj.detectAndDecode(roi)
+                    print('res:', res)
+                    print('points:', points)
+                    if not res:
+                        QR_info = resizetodecode(roi, 'resize400', index)
+                        if len(QR_info) == 0:
+                            QR_info = resizetodecode(roi, 'resize1000', index)
+                    else:
+                        QR_info = list(res)
                 result_list = result_list + QR_info
         img_name = os.path.basename(batch_image_list[0]).split('.')[0]
         img_path = os.path.dirname(batch_image_list[0])

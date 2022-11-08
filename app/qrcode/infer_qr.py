@@ -429,53 +429,59 @@ def decodeDisplay(image):
     return image, rects_list, polygon_points_list, QR_info
 
 
-def resizetodecode(img, cmd, index):
+def wechat_decode(img):
+    detect_obj = cv2.wechat_qrcode_WeChatQRCode(
+        '/home/cpard/attn_ocr/app/qrcode/wechat/detect.prototxt',
+        '/home/cpard/attn_ocr/app/qrcode/wechat/detect.caffemodel',
+        '/home/cpard/attn_ocr/app/qrcode/wechat/sr.prototxt',
+        '/home/cpard/attn_ocr/app/qrcode/wechat/sr.caffemodel')
+    res, points = detect_obj.detectAndDecode(img)
+    return res, points
+
+
+def resizetodecode(img, cmd):
     if FLAGS.image_dir is not None:
         abs_path = FLAGS.image_dir
     else:
         abs_path = '/home/cpard/attn_ocr/app/qrcode'
-    print(abs_path)
     resize = preprocess2decode(img, cmd)
-    im, rects_list, polygon_points_list, QR_info = decodeDisplay(resize)
-    if len(QR_info) == 0:
-        cv2.imwrite(
-            abs_path + '/resize_' + str(index) + '.jpg',
-            resize)
-        pil_img = Image.open(
-            abs_path + '/resize_' + str(index) + '.jpg')
-        brightness = ImageEnhance.Brightness(pil_img).enhance(2.0)  # 增加亮度
-        sharpness = ImageEnhance.Sharpness(brightness).enhance(3.0)  # 锐利化
-        contrast = ImageEnhance.Contrast(sharpness).enhance(3.0)  # 增加对比度
-        contrast.save(
-            abs_path + '/contrast_' + str(index) + '.jpg')
-        cont = cv2.imread(
-            abs_path + '/contrast_' + str(index) + '.jpg')
-        im, rects_list, polygon_points_list, QR_info = decodeDisplay(cont)
-        if len(QR_info) == 0:
-            binary = preprocess2decode(resize, 'binary')
-            im, rects_list, polygon_points_list, QR_info = decodeDisplay(binary[0])
-            if len(QR_info) == 0:
-                im, rects_list, polygon_points_list, QR_info = decodeDisplay(binary[1])
-                if len(QR_info) == 0:
-                    im, rects_list, polygon_points_list, QR_info = decodeDisplay(binary[2])
+    binarys = preprocess2decode(resize, 'binary')
+    for index, binary in enumerate(binarys):
+        res, points = wechat_decode(binary)
+        if not res:
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            iOpen = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+            res, points = wechat_decode(iOpen)
+            if not res:
+                QR_info = list(res)
+            else:
+                QR_info = list(res)
+                break
+        else:
+            QR_info = list(res)
+            break
     return QR_info
 
 
 def preprocess2decode(img, cmd):
-    if cmd == 'resize400':
-        resize = cv2.resize(img, (400, 400))
-        resize_gray = cv2.cvtColor(resize, cv2.COLOR_BGR2GRAY)
-        return resize_gray
-    if cmd == 'resize1000':
-        resize = cv2.resize(img, (1000, 1000))
+    if cmd == 'resize':
+        height, width = img.shape[:2]
+        resize = cv2.resize(img, (int(width * 2.0), int(height * 2.0)), interpolation=cv2.INTER_CUBIC)
         resize_gray = cv2.cvtColor(resize, cv2.COLOR_BGR2GRAY)
         return resize_gray
     if cmd == 'binary':
         ret2, image_otsu = cv2.threshold(img, 0, 255, cv2.THRESH_OTSU)
-        ret, binary = cv2.threshold(img, ret2, 255, cv2.THRESH_BINARY)
-        ret, binary10 = cv2.threshold(img, ret2 + 20, 255, cv2.THRESH_BINARY)
-        ret, binary20 = cv2.threshold(img, ret2 + 40, 255, cv2.THRESH_BINARY)
-        return [binary, binary10, binary20]
+        binarys = []
+        for i in range(5):
+            if i is not 0:
+                ret, binary = cv2.threshold(img, ret2 + i, 255, cv2.THRESH_BINARY)
+                binarys.append(binary)
+                ret, binary1 = cv2.threshold(img, ret2 - i, 255, cv2.THRESH_BINARY)
+                binarys.append(binary1)
+            else:
+                ret, binary = cv2.threshold(img, ret2, 255, cv2.THRESH_BINARY)
+                binarys.append(binary)
+        return binarys
     return img
 
 
@@ -496,31 +502,21 @@ def predict_image(detector, image_list, batch_size=1):
                     continue
                     # 提取二维码ROI区域
                 xmin, ymin, xmax, ymax = bbox
-                xmin = 0 if int(xmin) - 20 < 0 else int(xmin) - 20
-                ymin = 0 if int(ymin) - 20 < 0 else int(ymin) - 20
-                xmax = int(xmax) + 20
-                ymax = int(ymax) + 20
+                xmin = 0 if int(xmin) - 150 < 0 else int(xmin) - 150
+                ymin = 0 if int(ymin) - 150 < 0 else int(ymin) - 150
+                xmax = int(xmax) + 150
+                ymax = int(ymax) + 150
                 print('class_id:{:d}, confidence:{:.4f}, left_top:[{:.2f},{:.2f}],'
                       'right_bottom:[{:.2f},{:.2f}]'.format(int(clsid), score, xmin, ymin, xmax, ymax))
-                cv2.rectangle(img, (xmin, ymin), (xmax, ymax), (0, 0, 255), 2)
 
                 roi = img[ymin:ymax, xmin: xmax]
-                im, rects_list, polygon_points_list, QR_info = decodeDisplay(roi)
-                if len(QR_info) == 0:
-                    detect_obj = cv2.wechat_qrcode_WeChatQRCode(
-                        '/home/cpard/attn_ocr/app/qrcode/wechat/detect.prototxt',
-                        '/home/cpard/attn_ocr/app/qrcode/wechat/detect.caffemodel',
-                        '/home/cpard/attn_ocr/app/qrcode/wechat/sr.prototxt',
-                        '/home/cpard/attn_ocr/app/qrcode/wechat/sr.caffemodel')
-                    res, points = detect_obj.detectAndDecode(roi)
-                    print('res:', res)
-                    print('points:', points)
-                    if not res:
-                        QR_info = resizetodecode(roi, 'resize400', index)
-                        if len(QR_info) == 0:
-                            QR_info = resizetodecode(roi, 'resize1000', index)
-                    else:
-                        QR_info = list(res)
+                res, points = wechat_decode(roi)
+                print('res1:', res)
+                print('points1:', points)
+                if not res:
+                    QR_info = resizetodecode(roi, 'resize')
+                else:
+                    QR_info = list(res)
                 result_list = result_list + QR_info
         img_name = os.path.basename(batch_image_list[0]).split('.')[0]
         img_path = os.path.dirname(batch_image_list[0])

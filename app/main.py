@@ -116,10 +116,6 @@ def predict(item: PaddleItem):
                             extra = {}
                         if len(extra.keys()):
                             extra_dic = {}
-                            if 'decode_qrcode' in extra.keys():
-                                if extra['decode_qrcode']:
-                                    qrcode = utils.qrcode_dewarp(utils.read_img_from_base64(item.ImageBase64, 'pil'))
-                                    extra_dic['qrcode'] = qrcode
                             predicts_dict = {'result': [predict_result], 'im_type': im_type, 'extra': extra_dic}
                         else:
                             predicts_dict = {'result': [predict_result], 'im_type': im_type, 'extra': {}}
@@ -170,10 +166,6 @@ def predict(item: PaddleItem):
                 extra = {}
             if len(extra.keys()):
                 extra_dic = {}
-                if 'decode_qrcode' in extra.keys():
-                    if extra['decode_qrcode']:
-                        qrcode = utils.qrcode_dewarp(utils.read_img_from_base64(item.ImageBase64, 'pil'))
-                        extra_dic['qrcode'] = qrcode
                 predicts = {'result': [predict_result], 'im_type': im_type, 'extra': extra_dic}
             else:
                 predicts = {'result': [predict_result], 'im_type': im_type, 'extra': {}}

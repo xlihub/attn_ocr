@@ -241,7 +241,8 @@ class TextBox(Box):
         end = start + len(substr)
         np_start, np_end = self._get_np_index(start, end)
         loc_start, loc_end = self._get_loc_by_index(len(self.text), start, end)
-        before_box = TextBox(self.text[:start], self.x1, self.y1, loc_start, self.y2, self.original_np[:np_start], self.original_score[:np_start])
+        before_box = TextBox(self.text[:start], self.x1, self.y1, loc_start, self.y2, self.original_np[:np_start],
+                             self.original_score[:np_start])
         end_box = TextBox(self.text[end:], loc_end, self.y1, self.x2, self.y2,
                           np.concatenate([self.original_np[:ctc_padding], self.original_np[np_end:]], axis=0),
                           np.concatenate([self.original_score[:ctc_padding], self.original_score[np_end:]], axis=0))
@@ -409,7 +410,8 @@ class DataHandle(object):
                    {'trigger': 'terminal', 'source': States.field_done, 'dest': States.terminal,
                     'prepare': '_terminal'}]
 
-    def __init__(self, ocr, box, ocr_original, score_original, invoice_type, invoice_direction_filter, debug=False, debug_filter=None,
+    def __init__(self, ocr, box, ocr_original, score_original, invoice_type, invoice_direction_filter, debug=False,
+                 debug_filter=None,
                  bool_require=True, double_fix=False, x_threshold=2, y_threshold=2):
         self.ocr = ocr.copy()
         self.box = box.copy()
@@ -436,7 +438,8 @@ class DataHandle(object):
         self.machine = Machine(model=self, states=States, transitions=DataHandle.transitions, initial=States.prepare)
 
     def _prepare(self):
-        self.text_boxes = [TextBox(text, *self.box[i], self.ocr_original[i], self.score_original[i]) for i, text in enumerate(self.ocr)]
+        self.text_boxes = [TextBox(text, *self.box[i], self.ocr_original[i], self.score_original[i]) for i, text in
+                           enumerate(self.ocr)]
         self.data = {field: Field(decode, field) for field, decode in self.requirement.items()}
         for field_obj in self.data.values():
             field_obj.prepare(self.text_boxes)
@@ -522,7 +525,8 @@ class DataHandle(object):
             y.append(i.y2)
             np_array.append(i.original_np[ctc_padding:]) if index > 0 else np_array.append(i.original_np)
             score_array.append(i.original_score[ctc_padding:]) if index > 0 else score_array.append(i.original_score)
-        return "".join(text), min(x), min(y), max(x), max(y), np.concatenate(np_array, axis=0), np.concatenate(score_array, axis=0)
+        return "".join(text), min(x), min(y), max(x), max(y), np.concatenate(np_array, axis=0), np.concatenate(
+            score_array, axis=0)
 
     def _handle_by(self, handle, text_box_list, current_score, field, anchor, direction, siamese_threshold=0.9):
         x = {i: textbox.x for i, textbox in enumerate(text_box_list)}
@@ -568,12 +572,13 @@ class DataHandle(object):
             text_list = [box for box in text_list if self.data[field].siamese_ratio(box) > siamese_threshold]
             if len(text_list):
                 if isinstance(direction, list):
+                    box_list = []
                     for direct in direction:
-                        box_list = [box for box in text_list if
-                                    self.boxes_direction[(anchor, box)] == direct]
-                        if len(box_list):
-                            text_list = anchor.get_nearest(box_list)
-                            break
+                        boxes = [box for box in text_list if
+                                 self.boxes_direction[(anchor, box)] == direct]
+                        box_list.extend(boxes)
+                    if len(box_list):
+                        text_list = anchor.get_nearest(box_list)
                 else:
                     text_list = anchor.get_nearest(text_list)
                 # return TextBox(*self._concat_text_boxes(text_list))
@@ -611,9 +616,11 @@ class DataHandle(object):
                 anchor_box = self._get_fist_anchor(anchors)
                 if anchor_box:
                     if isinstance(direction, list):
-                        box_list = [box for box in self.text_boxes if self.boxes_direction[(anchor_box, box)] in direction]
+                        box_list = [box for box in self.text_boxes if
+                                    self.boxes_direction[(anchor_box, box)] in direction]
                     else:
-                        box_list = [box for box in self.text_boxes if self.boxes_direction[(anchor_box, box)] == direction]
+                        box_list = [box for box in self.text_boxes if
+                                    self.boxes_direction[(anchor_box, box)] == direction]
                     # print(field, anchors, direction, handle)
                     # print(self.current_score[field].text)
                     self.current_score[field] = self._handle_by(handle, box_list, self.current_score.get(field, None),
@@ -669,15 +676,21 @@ class DataHandle(object):
                         if len(text) == 10:
                             text = text[1:9]
                         if len(text) == 9:
-                            text = text[:8]
+                            if len(score):
+                                if score[0] < 0.9:
+                                    text = text[1:9]
+                                else:
+                                    text = text[:8]
                 elif char == 'site':
                     text = text.replace('合北', '台北').replace('合南', '台南').replace('合中', '台中')
                 elif char == 'chinese':
                     if len(text) != 1:
                         if loc == 'not':
-                            text = re.findall('[^\u4e00-\u9fa5]', text)[0] if len(re.findall('[^\u4e00-\u9fa5]', text)) else ''
+                            text = re.findall('[^\u4e00-\u9fa5]', text)[0] if len(
+                                re.findall('[^\u4e00-\u9fa5]', text)) else ''
                         elif loc == 'no':
-                            text = re.findall('[^\u4e00-\u9fa5]', text) if len(re.findall('[^\u4e00-\u9fa5]', text)) else ''
+                            text = re.findall('[^\u4e00-\u9fa5]', text) if len(
+                                re.findall('[^\u4e00-\u9fa5]', text)) else ''
                             text = ''.join(text)
                         else:
                             text = re.findall('[\u4e00-\u9fa5]', text)[0]
@@ -741,7 +754,7 @@ class DataHandle(object):
                                 self.check_symbol.append({'check': False, 'text': text, 'field': field})
         return text
 
-    def _output_handle(self, text, handles, field, score):
+    def output_handle_(self, text, handles, field, score):
         text_ = copy.copy(text)
         score_ = copy.copy(score)
         for handle in handles:
@@ -754,6 +767,24 @@ class DataHandle(object):
         if key and key in self.current_score:
             print(self.current_score[key].text)
         print({k: v.text for k, v in self.current_score.items()})
+
+    def _prepare_data_for_display(self):
+        text_list = []
+        boxes_list = []
+        score_list = []
+        text_boxes_list = []
+        for text_box in self.text_boxes:
+            if text_box.text is not '':
+                text_list.append(text_box.text)
+                boxes_list.append(list(text_box.box))
+                score = []
+                for idx in range(len(text_box.original_np)):
+                    if text_box.original_np[idx] in [0]:
+                        continue
+                    score.append(float(text_box.original_score[idx]))
+                score_list.append(score)
+                text_boxes_list.append(text_box)
+        return text_list, boxes_list, score_list, text_boxes_list
 
     def _terminal(self):
         # self.summary("terminal")
@@ -772,7 +803,8 @@ class DataHandle(object):
                     text = field_box.original_np
                     score = field_box.original_score
                     score_list = score_decode(text, score)
-                    terminal[field] = self._output_handle(terminal[field], self.output_handle.get(field, []), field, score_list)
+                    terminal[field] = self.output_handle_(terminal[field], self.output_handle.get(field, []), field,
+                                                          score_list)
             else:
                 terminal[field] = ""
         # 校验方法，当所有金额栏位第一位字符都低于阈值时，将第一位截掉
@@ -782,7 +814,8 @@ class DataHandle(object):
                 for item in self.check_symbol:
                     text = item['text']
                     terminal[item['field']] = text[1:]
-        return terminal
+        text_list, boxes_list, score_list, text_boxes_list = self._prepare_data_for_display()
+        return terminal, text_list, boxes_list, score_list, text_boxes_list
 
     def _check_anchor(self, least=1):
         score = self._get_current_score(True)
@@ -821,7 +854,7 @@ class DataHandle(object):
         self.anchor_progress()
         # print("phase2:", time.time() - now)
         if self.state == States.anchor_failure:
-            return "Failed", None
+            return "Failed", None, None
         else:
             # print("phase3:", time.time() - now)
             while True:
@@ -829,5 +862,5 @@ class DataHandle(object):
                 if self.state == States.field_done:
                     break
             # print("phase4:", time.time() - now)
-            terminal = self._terminal()
-            return "Succeeded", terminal
+            terminal, text_list, boxes_list, score_list, text_boxes_list = self._terminal()
+            return "Succeeded", terminal, text_list, boxes_list, score_list, text_boxes_list

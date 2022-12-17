@@ -6,7 +6,7 @@ from app.handler import OcrEngine, TxOutputParser, \
     SegmentationOutputParser, MultiOutputParser, PaddleOutputParser, PaddleMutiOutputParser, PaddleCHOutputParser
 from app.items import InputItem, SegInputItem, PaddleItem
 from app.serving_client import PaddleClient, PaddleCHClient
-from app.extractor.information_extraction import DataHandle
+from app.extractor.information_extraction import DataHandle, StringMatcher
 from app.extractor.direction_filter_generator import get_direction_filter
 from app.invoice_template.template import get_examples, tencent_name_transform
 from app.extractor.invoice_config import *
@@ -14,6 +14,8 @@ import ast
 import numpy as np
 import shutil
 import os
+import requests
+import copy
 
 app = FastAPI()
 
@@ -75,7 +77,7 @@ def predict(item: PaddleItem):
             boxes_dicts = []
             score_dicts = []
             mask_dicts = []
-            extra_results =[]
+            extra_results = []
             for index, preb_dict in enumerate(res):
                 if preb_dict['im_type'] == 'extra':
                     main_pred = results[-1]
@@ -105,7 +107,8 @@ def predict(item: PaddleItem):
                     print(text_dict)
                     # print(data)
                     direction_filter = get_direction_filter(get_examples())
-                    state, predict_result = DataHandle(text_dict, boxes_dict, preb_list, score_dict, im_type, direction_filter,
+                    state, predict_result = DataHandle(text_dict, boxes_dict, preb_list, score_dict, im_type,
+                                                       direction_filter,
                                                        True).extract()
                     print(state, predict_result)
                     if state == 'Failed':
@@ -155,12 +158,41 @@ def predict(item: PaddleItem):
         print(text_dict)
         # print(data)
         direction_filter = get_direction_filter(get_examples())
-        state, predict_result = DataHandle(text_dict, boxes_dict, preb_list, score_list, im_type, direction_filter,
-                                           True).extract()
+        ocr_handle = DataHandle(text_dict, boxes_dict, preb_list, score_list, im_type, direction_filter,
+                                True)
+        state, predict_result, new_text_list, new_boxes_list, new_score_list, text_boxes_list = ocr_handle.extract()
         print(state, predict_result)
         if state == 'Failed':
             predicts = {'result': [], 'im_type': im_type, 'extra': {}}
         else:
+            # 获取自定义模板数据
+            template = get_template_info(im_type, predict_result)
+            if template:
+                S_UNINO = predict_result['S_UNINO']
+                f_result = find_result_from_template(predict_result, new_text_list, new_boxes_list, new_score_list,
+                                                     mask_dict, template, ocr_handle, text_boxes_list)
+                ocr_handle.check_symbol = []
+                for res in f_result:
+                    label = res['label']
+                    if not label.startswith("__"):
+                        if res['final_text'] is not '':
+                            # print(res['final_text'])
+                            handle_text = ocr_handle.output_handle_(res['final_text'],
+                                                                    ocr_handle.output_handle.get(res['label'], []),
+                                                                    res['label'],
+                                                                    res['final_score'])
+                            # print(handle_text)
+                            predict_result[label] = handle_text
+                # 校验方法，当所有金额栏位第一位字符都低于阈值时，将第一位截掉
+                if len(ocr_handle.check_symbol):
+                    check_data = list(filter(lambda c: c['check'], ocr_handle.check_symbol))
+                    if len(check_data) == len(ocr_handle.check_symbol):
+                        for item in ocr_handle.check_symbol:
+                            text = item['text']
+                            predict_result[item['field']] = text[1:]
+                            # print(text[1:])
+                # print(f_result)
+                predict_result['S_UNINO'] = S_UNINO
             extra = get_extra()[im_type]
             if extra is None:
                 extra = {}
@@ -170,7 +202,8 @@ def predict(item: PaddleItem):
             else:
                 predicts = {'result': [predict_result], 'im_type': im_type, 'extra': {}}
             # predicts = [predicts_dict]
-        output_parser = PaddleOutputParser(item, predicts, text_dict, boxes_dict, score_dict, mask_dict)
+            # output_parser = PaddleOutputParser(item, predicts, text_dict, boxes_dict, score_dict, mask_dict)
+        output_parser = PaddleOutputParser(item, predicts, new_text_list, new_boxes_list, new_score_list, mask_dict)
         # output_parser = TxOutputParser(item, *predicts)
         response = output_parser.parse_output()
     return response
@@ -265,6 +298,170 @@ def predict(item: PaddleItem):
 #     predicts = engine.predict(item)
 #     output_parser = TxOutputParser(item, *predicts)
 #     return output_parser.parse_output(item.InvoiceType)
+def find_result_from_template(result, text_list, boxes_list, score_list, mask_dict, template, ocr_handle, text_boxes_list):
+    # 根据mask中x,y的值，将template中的所有point进行变换n_x = t_x - x,n_y = t_y - y
+    template_list = prepare_template(mask_dict, template)
+    # 处理result中的字段，每个字段形成key text box score的结构
+    result_list = prepare_result(result, text_list, boxes_list, score_list, template_list, ocr_handle, text_boxes_list)
+    # 遍历所有template中的字段，将point的box与result中的相同字段的box比较distance
+    # final_result = check_result_form_template(result_list, template_list)
+    # distance误差小，保持原值，distance误差大，在boxes_list里找出离box最近的box,采用它的值
+    return result_list
+
+
+def prepare_template(mask, template):
+    box = mask['box']
+    mask_x = box[0]
+    mask_y = box[1]
+    tem_list = template['TemplateData']['shapes']
+    anchor_list = []
+    for label in tem_list:
+        if label['label'].startswith("__"):
+            anchor_list.append(label)
+        label_points = label['points']
+        label_box = label_points[0].copy()
+        label_box.extend(label_points[2])
+        new_x = label_box[0] - mask_x
+        new_y = label_box[1] - mask_y
+        new_xx = label_box[2] - mask_x
+        new_yy = label_box[3] - mask_y
+        label_new_box = [new_x, new_y, new_xx, new_yy]
+        label['label_box'] = label_box
+        label['label_new_box'] = label_new_box
+    for label in tem_list:
+        # 获取栏位到瞄点的相对距离
+        if not label['label'].startswith("__"):
+            for anchor in anchor_list:
+                key = anchor['label']
+                label[key] = get_distance(label['label_box'], anchor['label_box'])
+    return tem_list
+
+
+def prepare_result(result, text_list, boxes_list, score_list, template_list, ocr_handle, text_boxes_list):
+    result_list = []
+    data_field = ocr_handle.data
+    anchors = {anchor: ocr_handle.current_score[anchor] for anchor in ocr_handle.current_score.keys() if anchor.startswith("__")}
+    for key in result.keys():
+        result_dic = {}
+        text = result[key]
+        result_dic['label'] = key
+        result_dic['text'] = text
+        result_dic['field'] = data_field[key]
+        if not key.startswith("__"):
+            siamese_threshold = 0.6
+            siamese_text_list = {i: textbox for i, textbox in enumerate(text_boxes_list) if data_field[key].siamese_ratio(textbox) > siamese_threshold}
+            result_dic['siamese_box'] = siamese_text_list
+        for index, original_text in enumerate(text_list):
+            m2 = StringMatcher(text, original_text)
+            r = m2.ratio()
+            if r > 0.9:
+                result_dic['original_text'] = original_text
+                result_dic['box'] = boxes_list[index]
+                result_dic['score'] = score_list[index]
+                break
+        result_dic['final_text'] = check_result_form_template(result_dic, template_list, text_list, boxes_list, score_list, anchors)
+        result_list.append(result_dic)
+    return result_list
+
+
+def check_result_form_template(result_dic, template_list, text_list, boxes_list, score_list, anchors):
+    label = result_dic['label']
+    if label.startswith("$"):
+        label = label[1:]
+    if label.startswith("__"):
+        label = label[2:]
+    # print(label)
+    final_text = ''
+    for template_dic in template_list:
+        m2 = StringMatcher(label, template_dic['label'])
+        r = m2.ratio()
+        if r > 0.9:
+            template_box = template_dic['label_new_box']
+            text_boxes = result_dic['siamese_box']
+            new_distance = {i: get_distance(template_box, list(text_boxes[i].box)) for i in text_boxes.keys()}
+            nearest = min(new_distance, key=new_distance.get)
+            dict_sorted = sorted(new_distance.items(), key=lambda i: i[1], reverse=False) if len(new_distance) > 1 else list(new_distance.items())
+            best_box = text_boxes[nearest]
+            if label in ['AMTN_NET', 'TAX', 'AMTN']:
+                temp_diff = 0
+                check = True
+                diff_list = []
+                temp_diff_list = []
+                for i, dis in dict_sorted:
+                    temp_box = text_boxes[i]
+                    diff = 0
+                    for item in template_dic.keys():
+                        if item.startswith("__"):
+                            # print(label + item)
+                            if item in anchors.keys():
+                                anchor = anchors[item]
+                                anchor_box = anchor.box
+                                result_dic[item] = get_distance(list(temp_box.box), list(anchor_box))
+                                # print('____________')
+                                # print(temp_box.text)
+                                # print('template_distance:' + str(template_dic[item]))
+                                # print('result_distance:' + str(result_dic[item]))
+                                # print('_distance_:' + str(result_dic[item] - template_dic[item]))
+                                # print('%_distance_%:' + str((result_dic[item] - template_dic[item]) / template_dic[item]))
+                                # print('____________')
+                                diff = abs(result_dic[item] - template_dic[item]) / template_dic[item]
+                                if diff > 0.05:
+                                    check = False
+                                    diff_list.append(diff)
+                    if check:
+                        break
+                    else:
+                        if temp_diff is 0:
+                            temp_diff = diff
+                            temp_diff_list = diff_list
+                            continue
+                        else:
+                            if diff < temp_diff:
+                                if abs(diff - temp_diff) < 0.1:
+                                    if len(diff_list) < len(temp_diff_list):
+                                        best_box = temp_box
+                                else:
+                                    best_box = temp_box
+                                break
+                            else:
+                                continue
+            # print(best_box.text)
+            final_text = best_box.text
+            result_dic['final_box'] = boxes_list[nearest]
+            result_dic['final_score'] = score_list[nearest]
+            return final_text
+    return final_text
+
+
+def get_distance(box1, box2):
+    center1_x, center1_y = (box1[0] + box1[2]) / 2, (
+            box1[1] + box1[3]) / 2
+    center2_x, center2_y = (box2[0] + box2[2]) / 2, (
+            box2[1] + box2[3]) / 2
+    return (center1_x - center2_x) ** 2 + (center1_y - center2_y) ** 2
+
+
+def get_template_info(im_type, result):
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    url = 'http://192.168.200.201:3008/api/templateInfo'
+    query = {
+        'type': im_type,
+        'no': result['S_UNINO'],
+        'name': ''
+    }
+    try:
+        response = requests.get(url, params=query, headers=headers)
+        template = {}
+        if response.status_code is 200:
+            res = response.json()
+            if res['success']:
+                template = res['template']
+        return template
+    except Exception as e:
+        return False
 
 
 def pb2dict(obj):

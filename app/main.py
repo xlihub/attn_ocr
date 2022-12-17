@@ -444,7 +444,8 @@ def get_distance(box1, box2):
 def get_template_info(im_type, result):
     headers = {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Connection': 'close'
     }
     url = 'http://192.168.200.201:3008/api/templateInfo'
     query = {
@@ -453,7 +454,9 @@ def get_template_info(im_type, result):
         'name': ''
     }
     try:
-        response = requests.get(url, params=query, headers=headers)
+        session = requests.session()
+        session.keep_alive = False
+        response = session.get(url, params=query, headers=headers)
         template = {}
         if response.status_code is 200:
             res = response.json()

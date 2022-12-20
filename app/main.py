@@ -180,12 +180,15 @@ def predict(item: PaddleItem):
                     if not label.startswith("__"):
                         if res['final_text'] is not '':
                             # print(res['final_text'])
-                            handle_text = ocr_handle.output_handle_(res['final_text'],
-                                                                    ocr_handle.output_handle.get(res['label'], []),
-                                                                    res['label'],
-                                                                    res['final_score'])
-                            # print(handle_text)
-                            predict_result[label] = handle_text
+                            if ocr_handle.output_handle is not None:
+                                handle_text = ocr_handle.output_handle_(res['final_text'],
+                                                                        ocr_handle.output_handle.get(res['label'], []),
+                                                                        res['label'],
+                                                                        res['final_score'])
+                                # print(handle_text)
+                                predict_result[label] = handle_text
+                            else:
+                                predict_result[label] = res['final_text']
                 # 校验方法，当所有金额栏位第一位字符都低于阈值时，将第一位截掉
                 if len(ocr_handle.check_symbol):
                     check_data = list(filter(lambda c: c['check'], ocr_handle.check_symbol))
@@ -301,7 +304,8 @@ def predict(item: PaddleItem):
 #     predicts = engine.predict(item)
 #     output_parser = TxOutputParser(item, *predicts)
 #     return output_parser.parse_output(item.InvoiceType)
-def find_result_from_template(result, text_list, boxes_list, score_list, mask_dict, template, ocr_handle, text_boxes_list):
+def find_result_from_template(result, text_list, boxes_list, score_list, mask_dict, template, ocr_handle,
+                              text_boxes_list):
     # 根据mask中x,y的值，将template中的所有point进行变换n_x = t_x - x,n_y = t_y - y
     template_list = prepare_template(mask_dict, template)
     # 处理result中的字段，每个字段形成key text box score的结构
@@ -343,7 +347,8 @@ def prepare_template(mask, template):
 def prepare_result(result, text_list, boxes_list, score_list, template_list, ocr_handle, text_boxes_list):
     result_list = []
     data_field = ocr_handle.data
-    anchors = {anchor: ocr_handle.current_score[anchor] for anchor in ocr_handle.current_score.keys() if anchor.startswith("__")}
+    anchors = {anchor: ocr_handle.current_score[anchor] for anchor in ocr_handle.current_score.keys() if
+               anchor.startswith("__")}
     for key in result.keys():
         result_dic = {}
         text = result[key]
@@ -352,7 +357,8 @@ def prepare_result(result, text_list, boxes_list, score_list, template_list, ocr
         result_dic['field'] = data_field[key]
         if not key.startswith("__"):
             siamese_threshold = 0.6
-            siamese_text_list = {i: textbox for i, textbox in enumerate(text_boxes_list) if data_field[key].siamese_ratio(textbox) > siamese_threshold}
+            siamese_text_list = {i: textbox for i, textbox in enumerate(text_boxes_list) if
+                                 data_field[key].siamese_ratio(textbox) > siamese_threshold}
             result_dic['siamese_box'] = siamese_text_list
         for index, original_text in enumerate(text_list):
             m2 = StringMatcher(text, original_text)
@@ -362,7 +368,8 @@ def prepare_result(result, text_list, boxes_list, score_list, template_list, ocr
                 result_dic['box'] = boxes_list[index]
                 result_dic['score'] = score_list[index]
                 break
-        result_dic['final_text'] = check_result_form_template(result_dic, template_list, text_list, boxes_list, score_list, anchors)
+        result_dic['final_text'] = check_result_form_template(result_dic, template_list, text_list, boxes_list,
+                                                              score_list, anchors)
         result_list.append(result_dic)
     return result_list
 
@@ -383,7 +390,8 @@ def check_result_form_template(result_dic, template_list, text_list, boxes_list,
             text_boxes = result_dic['siamese_box']
             new_distance = {i: get_distance(template_box, list(text_boxes[i].box)) for i in text_boxes.keys()}
             nearest = min(new_distance, key=new_distance.get)
-            dict_sorted = sorted(new_distance.items(), key=lambda i: i[1], reverse=False) if len(new_distance) > 1 else list(new_distance.items())
+            dict_sorted = sorted(new_distance.items(), key=lambda i: i[1], reverse=False) if len(
+                new_distance) > 1 else list(new_distance.items())
             best_box = text_boxes[nearest]
             if label in ['AMTN_NET', 'TAX', 'AMTN']:
                 temp_diff = 0

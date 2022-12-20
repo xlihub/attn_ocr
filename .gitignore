@@ -5,3 +5,4 @@ test_img
 *.csv
 .idea
 nohup.out
+data.db

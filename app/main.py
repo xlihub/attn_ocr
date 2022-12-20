@@ -15,6 +15,7 @@ import numpy as np
 import shutil
 import os
 import requests
+import httpx
 import copy
 
 app = FastAPI()
@@ -167,6 +168,8 @@ def predict(item: PaddleItem):
         else:
             # 获取自定义模板数据
             template = get_template_info(im_type, predict_result)
+            # print('template')
+            # print(template)
             if template:
                 S_UNINO = predict_result['S_UNINO']
                 f_result = find_result_from_template(predict_result, new_text_list, new_boxes_list, new_score_list,
@@ -445,7 +448,6 @@ def get_template_info(im_type, result):
     headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Connection': 'close'
     }
     url = 'http://0.0.0.0:3008/api/templateInfo'
     query = {
@@ -453,18 +455,21 @@ def get_template_info(im_type, result):
         'no': result['S_UNINO'],
         'name': ''
     }
+    client = httpx.Client(verify=False)
     try:
-        session = requests.session()
-        session.keep_alive = False
-        response = session.get(url, params=query, headers=headers)
+        response = client.get(url, params=query, headers=headers)
+        response.raise_for_status()
         template = {}
         if response.status_code is 200:
             res = response.json()
             if res['success']:
                 template = res['template']
         return template
-    except Exception as e:
+    except httpx.HTTPError as exc:
+        print(f"HTTP Exception for {exc.request.url} - {exc}")
         return False
+    finally:
+        client.close()
 
 
 def pb2dict(obj):

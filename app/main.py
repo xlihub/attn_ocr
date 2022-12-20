@@ -446,7 +446,7 @@ def get_template_info(im_type, result):
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
-    url = 'http://192.168.200.201:3008/api/templateInfo'
+    url = 'http://0.0.0.0:3008/api/templateInfo'
     query = {
         'type': im_type,
         'no': result['S_UNINO'],

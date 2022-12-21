@@ -20,6 +20,8 @@ import copy
 
 app = FastAPI()
 
+Template_Type = ['invoice_A4', 'invoice_A5']
+
 
 ##
 # invoice_direction_filter = get_direction_filter(get_examples())
@@ -495,31 +497,34 @@ def get_distance(box1, box2):
 
 
 def get_template_info(im_type, result):
-    headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-    }
-    url = 'http://0.0.0.0:3008/api/templateInfo'
-    query = {
-        'type': im_type,
-        'no': result['S_UNINO'],
-        'name': ''
-    }
-    client = httpx.Client(verify=False)
-    try:
-        response = client.get(url, params=query, headers=headers)
-        response.raise_for_status()
-        template = {}
-        if response.status_code is 200:
-            res = response.json()
-            if res['success']:
-                template = res['template']
-        return template
-    except httpx.HTTPError as exc:
-        print(f"HTTP Exception for {exc.request.url} - {exc}")
+    if im_type in Template_Type:
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        }
+        url = 'http://0.0.0.0:3008/api/templateInfo'
+        query = {
+            'type': im_type,
+            'no': result['S_UNINO'],
+            'name': ''
+        }
+        client = httpx.Client(verify=False)
+        try:
+            response = client.get(url, params=query, headers=headers)
+            response.raise_for_status()
+            template = {}
+            if response.status_code is 200:
+                res = response.json()
+                if res['success']:
+                    template = res['template']
+            return template
+        except httpx.HTTPError as exc:
+            print(f"HTTP Exception for {exc.request.url} - {exc}")
+            return False
+        finally:
+            client.close()
+    else:
         return False
-    finally:
-        client.close()
 
 
 def pb2dict(obj):

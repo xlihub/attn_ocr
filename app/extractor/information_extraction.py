@@ -781,7 +781,9 @@ class DataHandle(object):
                 for idx in range(len(text_box.original_np)):
                     if text_box.original_np[idx] in [0]:
                         continue
-                    score.append(float(text_box.original_score[idx]))
+                    s_l = len(text_box.original_score)
+                    if len(text_box.original_score):
+                        score.append(float(text_box.original_score[idx]))
                 score_list.append(score)
                 text_boxes_list.append(text_box)
         return text_list, boxes_list, score_list, text_boxes_list

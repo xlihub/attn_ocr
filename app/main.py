@@ -98,6 +98,11 @@ def predict(item: PaddleItem):
                         # preds_idx = preb.argmax(axis=1)
                         # print(preds_idx)
                     # data = np.fromstring(predicts.value[1], np.float32)
+                    score_list = []
+                    score_ls = ast.literal_eval(preb_dict['raw_score'])
+                    for score_str in score_ls:
+                        score = np.frombuffer(score_str['bytes'], dtype=score_str['dtype']).reshape(score_str['shape'])
+                        score_list.append(score)
                     text_dict = ast.literal_eval(preb_dict['text'])
                     boxes_dict = ast.literal_eval(preb_dict['boxes'])
                     im_type = preb_dict['im_type']
@@ -108,13 +113,50 @@ def predict(item: PaddleItem):
                     print(text_dict)
                     # print(data)
                     direction_filter = get_direction_filter(get_examples())
-                    state, predict_result = DataHandle(text_dict, boxes_dict, preb_list, score_dict, im_type,
-                                                       direction_filter,
-                                                       True).extract()
+                    ocr_handle = DataHandle(
+                        text_dict, boxes_dict, preb_list, score_list, im_type,
+                        direction_filter,
+                        True)
+                    state, predict_result, new_text_list, new_boxes_list, new_score_list, text_boxes_list = ocr_handle.extract()
                     print(state, predict_result)
                     if state == 'Failed':
                         predicts_dict = {'result': [], 'im_type': im_type, 'extra': {}}
                     else:
+                        # 获取自定义模板数据
+                        template = get_template_info(im_type, predict_result)
+                        # print('template')
+                        # print(template)
+                        if template:
+                            S_UNINO = predict_result['S_UNINO']
+                            f_result = find_result_from_template(predict_result, new_text_list, new_boxes_list,
+                                                                 new_score_list,
+                                                                 mask_dict, template, ocr_handle, text_boxes_list)
+                            ocr_handle.check_symbol = []
+                            for res in f_result:
+                                label = res['label']
+                                if not label.startswith("__"):
+                                    if res['final_text'] is not '':
+                                        # print(res['final_text'])
+                                        if ocr_handle.output_handle is not None:
+                                            handle_text = ocr_handle.output_handle_(res['final_text'],
+                                                                                    ocr_handle.output_handle.get(
+                                                                                        res['label'], []),
+                                                                                    res['label'],
+                                                                                    res['final_score'])
+                                            # print(handle_text)
+                                            predict_result[label] = handle_text
+                                        else:
+                                            predict_result[label] = res['final_text']
+                            # 校验方法，当所有金额栏位第一位字符都低于阈值时，将第一位截掉
+                            if len(ocr_handle.check_symbol):
+                                check_data = list(filter(lambda c: c['check'], ocr_handle.check_symbol))
+                                if len(check_data) == len(ocr_handle.check_symbol):
+                                    for item in ocr_handle.check_symbol:
+                                        text = item['text']
+                                        predict_result[item['field']] = text[1:]
+                                        # print(text[1:])
+                            # print(f_result)
+                            predict_result['S_UNINO'] = S_UNINO
                         extra = get_extra()[im_type]
                         if extra is None:
                             extra = {}
@@ -124,9 +166,9 @@ def predict(item: PaddleItem):
                         else:
                             predicts_dict = {'result': [predict_result], 'im_type': im_type, 'extra': {}}
                     results.append(predicts_dict)
-                    text_dicts.append(text_dict)
-                    boxes_dicts.append(boxes_dict)
-                    score_dicts.append(score_dict)
+                    text_dicts.append(new_text_list)
+                    boxes_dicts.append(new_boxes_list)
+                    score_dicts.append(new_score_list)
                     mask_dicts.append(mask_dict)
             output_parser = PaddleMutiOutputParser(item, results, text_dicts, boxes_dicts, score_dicts, mask_dicts)
             # output_parser = TxOutputParser(item, *predicts)

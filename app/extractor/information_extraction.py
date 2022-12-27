@@ -748,7 +748,7 @@ class DataHandle(object):
                 if char == 'symbol':
                     if loc == 'money':
                         if len(score):
-                            if score[0] < 0.9:
+                            if score[0] < 0.92:
                                 self.check_symbol.append({'check': True, 'text': text, 'field': field})
                             else:
                                 self.check_symbol.append({'check': False, 'text': text, 'field': field})

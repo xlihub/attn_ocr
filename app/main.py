@@ -22,6 +22,8 @@ app = FastAPI()
 
 Template_Type = ['invoice_A4', 'invoice_A5']
 
+checked_text_boxes = {}
+
 
 ##
 # invoice_direction_filter = get_direction_filter(get_examples())
@@ -403,7 +405,11 @@ def prepare_result(result, text_list, boxes_list, score_list, template_list, ocr
             siamese_threshold = 0.6
             siamese_text_list = {i: textbox for i, textbox in enumerate(text_boxes_list) if
                                  data_field[key].siamese_ratio(textbox) > siamese_threshold}
-            result_dic['siamese_box'] = siamese_text_list
+            # print(checked_text_boxes)
+            # 去除已经选择过的box
+            checked_boxes = checked_text_boxes.values()
+            result_dic['siamese_box'] = {i: siamese_text_list[i] for i in siamese_text_list.keys() if
+                                         i not in checked_boxes}
         for index, original_text in enumerate(text_list):
             m2 = StringMatcher(text, original_text)
             r = m2.ratio()
@@ -437,12 +443,15 @@ def check_result_form_template(result_dic, template_list, text_list, boxes_list,
             dict_sorted = sorted(new_distance.items(), key=lambda i: i[1], reverse=False) if len(
                 new_distance) > 1 else list(new_distance.items())
             best_box = text_boxes[nearest]
+            # print(best_box.text)
             if label in ['AMTN_NET', 'TAX', 'AMTN']:
                 temp_diff = 0
                 check = True
                 diff_list = []
                 temp_diff_list = []
                 for i, dis in dict_sorted:
+                    if dis > 100000:
+                        break
                     temp_box = text_boxes[i]
                     diff = 0
                     for item in template_dic.keys():
@@ -457,7 +466,8 @@ def check_result_form_template(result_dic, template_list, text_list, boxes_list,
                                 # print('template_distance:' + str(template_dic[item]))
                                 # print('result_distance:' + str(result_dic[item]))
                                 # print('_distance_:' + str(result_dic[item] - template_dic[item]))
-                                # print('%_distance_%:' + str((result_dic[item] - template_dic[item]) / template_dic[item]))
+                                # print(
+                                #     '%_distance_%:' + str((result_dic[item] - template_dic[item]) / template_dic[item]))
                                 # print('____________')
                                 diff = abs(result_dic[item] - template_dic[item]) / template_dic[item]
                                 if diff > 0.05:
@@ -475,8 +485,10 @@ def check_result_form_template(result_dic, template_list, text_list, boxes_list,
                                 if abs(diff - temp_diff) < 0.1:
                                     if len(diff_list) < len(temp_diff_list):
                                         best_box = temp_box
+                                        nearest = i
                                 else:
                                     best_box = temp_box
+                                    nearest = i
                                 break
                             else:
                                 continue
@@ -484,6 +496,7 @@ def check_result_form_template(result_dic, template_list, text_list, boxes_list,
             final_text = best_box.text
             result_dic['final_box'] = boxes_list[nearest]
             result_dic['final_score'] = score_list[nearest]
+            checked_text_boxes[label] = nearest
             return final_text
     return final_text
 
@@ -502,7 +515,7 @@ def get_template_info(im_type, result):
             'Content-Type': 'application/json',
             'Accept': 'application/json',
         }
-        url = 'http://0.0.0.0:3008/api/templateInfo'
+        url = 'http://0.0.0.0:3001/api/templateInfo'
         query = {
             'type': im_type,
             'no': result['S_UNINO'],

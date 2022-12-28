@@ -174,6 +174,7 @@ def predict(item: PaddleItem):
                     boxes_dicts.append(new_boxes_list)
                     score_dicts.append(new_score_list)
                     mask_dicts.append(mask_dict)
+            checked_text_boxes.clear()
             output_parser = PaddleMutiOutputParser(item, results, text_dicts, boxes_dicts, score_dicts, mask_dicts)
             # output_parser = TxOutputParser(item, *predicts)
             response = output_parser.parse_output()
@@ -255,6 +256,7 @@ def predict(item: PaddleItem):
                 predicts = {'result': [predict_result], 'im_type': im_type, 'extra': {}}
             # predicts = [predicts_dict]
             # output_parser = PaddleOutputParser(item, predicts, text_dict, boxes_dict, score_dict, mask_dict)
+        checked_text_boxes.clear()
         output_parser = PaddleOutputParser(item, predicts, new_text_list, new_boxes_list, new_score_list, mask_dict)
         # output_parser = TxOutputParser(item, *predicts)
         response = output_parser.parse_output()
@@ -479,11 +481,12 @@ def check_result_form_template(result_dic, template_list, text_list, boxes_list,
                         if temp_diff is 0:
                             temp_diff = diff
                             temp_diff_list = diff_list
+                            diff_list = []
                             continue
                         else:
                             if diff < temp_diff:
                                 if abs(diff - temp_diff) < 0.1:
-                                    if len(diff_list) < len(temp_diff_list):
+                                    if len(diff_list) <= len(temp_diff_list):
                                         best_box = temp_box
                                         nearest = i
                                 else:
@@ -491,6 +494,7 @@ def check_result_form_template(result_dic, template_list, text_list, boxes_list,
                                     nearest = i
                                 break
                             else:
+                                diff_list = []
                                 continue
             # print(best_box.text)
             final_text = best_box.text

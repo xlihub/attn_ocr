@@ -381,15 +381,15 @@ def checkdata(im_type, im_dict):
             im_dict['TAX_ID2'] = ''
             im_dict['TAX_ID3'] = ''
             # im_dict['TAX'] = str(int(im_dict['AMTN']) - int(im_dict['AMTN_NET']))
-        elif im_dict['TAX_ID2'] != '':
-            im_dict['TAX_ID2'] = 'V'
-            im_dict['$TAX'] = '0'
-            im_dict['AMTN'] = im_dict['$AMTN_NET']
-            if im_dict['TAX_ID3'] != '':
-                im_dict['TAX_ID3'] = 'V'
-                im_dict['TAX_ID2'] = ''
-                im_dict['$TAX'] = '0'
-                im_dict['AMTN'] = im_dict['$AMTN_NET']
+        # elif im_dict['TAX_ID2'] != '':
+        #     im_dict['TAX_ID2'] = 'V'
+        #     im_dict['$TAX'] = '0'
+        #     im_dict['AMTN'] = im_dict['$AMTN_NET']
+        #     if im_dict['TAX_ID3'] != '':
+        #         im_dict['TAX_ID3'] = 'V'
+        #         im_dict['TAX_ID2'] = ''
+        #         im_dict['$TAX'] = '0'
+        #         im_dict['AMTN'] = im_dict['$AMTN_NET']
     return im_dict
 
 

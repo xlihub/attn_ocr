@@ -22,6 +22,11 @@ app = FastAPI()
 
 Template_Type = ['invoice_A4', 'invoice_A5']
 
+Template_Distance = {
+    'invoice_A4': 0.05,
+    'invoice_A5': 0.1,
+}
+
 checked_text_boxes = {}
 
 
@@ -220,7 +225,7 @@ def predict(item: PaddleItem):
             if template:
                 S_UNINO = predict_result['S_UNINO']
                 f_result = find_result_from_template(predict_result, new_text_list, new_boxes_list, new_score_list,
-                                                     mask_dict, template, ocr_handle, text_boxes_list)
+                                                     mask_dict, template, ocr_handle, text_boxes_list, im_type)
                 ocr_handle.check_symbol = []
                 for res in f_result:
                     label = res['label']
@@ -353,11 +358,11 @@ def predict(item: PaddleItem):
 #     output_parser = TxOutputParser(item, *predicts)
 #     return output_parser.parse_output(item.InvoiceType)
 def find_result_from_template(result, text_list, boxes_list, score_list, mask_dict, template, ocr_handle,
-                              text_boxes_list):
+                              text_boxes_list, im_type):
     # 根据mask中x,y的值，将template中的所有point进行变换n_x = t_x - x,n_y = t_y - y
     template_list = prepare_template(mask_dict, template)
     # 处理result中的字段，每个字段形成key text box score的结构
-    result_list = prepare_result(result, text_list, boxes_list, score_list, template_list, ocr_handle, text_boxes_list)
+    result_list = prepare_result(result, text_list, boxes_list, score_list, template_list, ocr_handle, text_boxes_list, im_type)
     # 遍历所有template中的字段，将point的box与result中的相同字段的box比较distance
     # final_result = check_result_form_template(result_list, template_list)
     # distance误差小，保持原值，distance误差大，在boxes_list里找出离box最近的box,采用它的值
@@ -392,7 +397,7 @@ def prepare_template(mask, template):
     return tem_list
 
 
-def prepare_result(result, text_list, boxes_list, score_list, template_list, ocr_handle, text_boxes_list):
+def prepare_result(result, text_list, boxes_list, score_list, template_list, ocr_handle, text_boxes_list, im_type):
     result_list = []
     data_field = ocr_handle.data
     anchors = {anchor: ocr_handle.current_score[anchor] for anchor in ocr_handle.current_score.keys() if
@@ -421,12 +426,12 @@ def prepare_result(result, text_list, boxes_list, score_list, template_list, ocr
                 result_dic['score'] = score_list[index]
                 break
         result_dic['final_text'] = check_result_form_template(result_dic, template_list, text_list, boxes_list,
-                                                              score_list, anchors)
+                                                              score_list, anchors, im_type)
         result_list.append(result_dic)
     return result_list
 
 
-def check_result_form_template(result_dic, template_list, text_list, boxes_list, score_list, anchors):
+def check_result_form_template(result_dic, template_list, text_list, boxes_list, score_list, anchors, im_type):
     label = result_dic['label']
     if label.startswith("$"):
         label = label[1:]
@@ -472,7 +477,9 @@ def check_result_form_template(result_dic, template_list, text_list, boxes_list,
                                 #     '%_distance_%:' + str((result_dic[item] - template_dic[item]) / template_dic[item]))
                                 # print('____________')
                                 diff = abs(result_dic[item] - template_dic[item]) / template_dic[item]
-                                if diff > 0.05:
+                                distance = Template_Distance[im_type]
+                                if diff > distance:
+                                    # if not item == '__統一發票專用章':
                                     check = False
                                     diff_list.append(diff)
                     if check:
@@ -485,10 +492,16 @@ def check_result_form_template(result_dic, template_list, text_list, boxes_list,
                             continue
                         else:
                             if diff < temp_diff:
-                                if abs(diff - temp_diff) < 0.1:
-                                    if len(diff_list) <= len(temp_diff_list):
+                                if abs(diff - temp_diff) < 0.5:
+                                    if len(diff_list) < len(temp_diff_list):
                                         best_box = temp_box
                                         nearest = i
+                                    elif len(diff_list) == len(temp_diff_list):
+                                        average_temp = sum(temp_diff_list) / len(temp_diff_list)
+                                        average = sum(diff_list) / len(diff_list)
+                                        if average < average_temp:
+                                            best_box = temp_box
+                                            nearest = i
                                 else:
                                     best_box = temp_box
                                     nearest = i

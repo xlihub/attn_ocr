@@ -435,8 +435,11 @@ def wechat_decode(img):
         '/home/cpard/attn_ocr/app/qrcode/wechat/detect.caffemodel',
         '/home/cpard/attn_ocr/app/qrcode/wechat/sr.prototxt',
         '/home/cpard/attn_ocr/app/qrcode/wechat/sr.caffemodel')
-    res, points = detect_obj.detectAndDecode(img)
-    return res, points
+    try:
+        res, points = detect_obj.detectAndDecode(img)
+        return res, points
+    except Exception as e:
+        return [''], ['']
 
 
 def resizetodecode(img, cmd):

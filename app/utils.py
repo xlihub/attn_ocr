@@ -532,6 +532,41 @@ def score_decode(text, score):
     return score_list
 
 
+# 判断是否全是中文字符
+def is_all_chinese(text):
+    for _char in text:
+        if not '\u4e00' <= _char <= '\u9fa5':
+            return False
+    return True
+
+
+# 判断是否含有中文字符
+def is_contains_chinese(text):
+    for _char in text:
+        if '\u4e00' <= _char <= '\u9fa5':
+            return True
+    return False
+
+
+# 判断是否全是英文字符
+def is_all_english(text):
+    import string
+    for i in text:
+        if i not in string.ascii_lowercase + string.ascii_uppercase:
+            return False
+    return True
+
+
+# 判断是否含有英文字符
+def is_contains_english(text):
+    my_re = re.compile(r'[A-Za-z]', re.S)
+    res = re.findall(my_re, text)
+    if len(res):
+        return True
+    else:
+        return False
+
+
 def debug(fn):
     def wrapper(*args, **kwargs):
         start = time.time()

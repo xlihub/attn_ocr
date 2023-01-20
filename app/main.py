@@ -17,6 +17,7 @@ import os
 import requests
 import httpx
 import copy
+import re
 
 app = FastAPI()
 
@@ -92,10 +93,10 @@ def predict(item: PaddleItem):
                 if preb_dict['im_type'] == 'extra':
                     main_pred = results[-1]
                     text_list = ast.literal_eval(preb_dict['text'])
-                    extra_text = ''
-                    for text in text_list:
-                        extra_text += text
+                    # for text in text_list:
+                    #     extra_text += text
                     ext_key = preb_dict['ext_key']
+                    extra_text = prepare_extra_text(text_list, ext_key, im_type)
                     main_pred['extra'][ext_key] = extra_text
                     results[-1] = main_pred
                 else:
@@ -357,6 +358,51 @@ def predict(item: PaddleItem):
 #     predicts = engine.predict(item)
 #     output_parser = TxOutputParser(item, *predicts)
 #     return output_parser.parse_output(item.InvoiceType)
+def prepare_extra_text(text_list, ext_key, im_type):
+    ext_text = ''
+    if im_type == 'invoice_sy':
+        if ext_key == 'SY_NO1':
+            for text in text_list:
+                if utils.is_contains_chinese(text):
+                    continue
+                else:
+                    if utils.is_all_english(text):
+                        ext_text = text.upper()
+                    else:
+                        continue
+        elif ext_key == 'SY_NO2':
+            for text in text_list:
+                if utils.is_contains_chinese(text):
+                    continue
+                else:
+                    if text.isdigit():
+                        ext_text = text
+                    else:
+                        continue
+        else:
+            for text in text_list:
+                ext_text += text
+    elif im_type == 'invoice_sk':
+        if ext_key == 'SK_S_UNINO' or ext_key == 'SK_S_UNINO_2':
+            for text in text_list:
+                text = text.replace('o', '0').replace('I', '1').replace('O', '0').replace('S', '9')
+                num_list = re.findall(r"\d+?\d*", text)
+                if len(num_list) == 1:
+                    num_str = num_list[0]
+                    num_str = num_str[:8]
+                    ext_text = num_str
+                    break
+                else:
+                    continue
+        else:
+            for text in text_list:
+                ext_text += text
+    else:
+        for text in text_list:
+            ext_text += text
+    return ext_text
+
+
 def find_result_from_template(result, text_list, boxes_list, score_list, mask_dict, template, ocr_handle,
                               text_boxes_list, im_type):
     # 根据mask中x,y的值，将template中的所有point进行变换n_x = t_x - x,n_y = t_y - y

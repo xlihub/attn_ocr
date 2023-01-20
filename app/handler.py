@@ -426,7 +426,7 @@ def check_extradata(im_type, ext_dict):
     return ext_dict
 
 
-def check_yymm(yymm, mm):
+def check_yymm(yymm, isYYMM):
     yy = mm = ''
     if len(yymm) == 5:
         yy = yymm[:3]
@@ -462,7 +462,7 @@ def check_yymm(yymm, mm):
                 min_mm = max_mm
                 max_mm = int(max_mm) + 1
                 mm = min_mm + str(max_mm)
-    if mm:
+    if isYYMM:
         return mm
     else:
         return yy + mm

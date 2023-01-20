@@ -668,6 +668,14 @@ class DataHandle(object):
                         if len(text) == 9:
                             text = text[:3] + '/' + text[4:6] + '/' + text[-2:]
                             text = text.replace('L', '1')
+                    elif loc == 'YYMMDD':
+                        date_str = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+                        text_list = re.findall(r"\d+?\d*", text)
+                        text = ''
+                        for text_str in text_list:
+                            if text_str in date_str:
+                                text_str = '0' + text_str
+                            text += text_str
                 elif char == 'CARR_NO':
                     text = text.replace('o', '0').replace('I', '1')
                 elif char == 'S_UNINO':
@@ -689,9 +697,10 @@ class DataHandle(object):
                             text = re.findall('[^\u4e00-\u9fa5]', text)[0] if len(
                                 re.findall('[^\u4e00-\u9fa5]', text)) else ''
                         elif loc == 'no':
-                            text = re.findall('[^\u4e00-\u9fa5]', text) if len(
-                                re.findall('[^\u4e00-\u9fa5]', text)) else ''
-                            text = ''.join(text)
+                            # text = re.findall('[^\u4e00-\u9fa5]', text) if len(
+                            #     re.findall('[^\u4e00-\u9fa5]', text)) else ''
+                            # text = ''.join(text)
+                            text = re.sub(u"([^\u0041-\u005a\u0061-\u007a\u0030-\u0039])", "", text)
                         else:
                             text = re.findall('[\u4e00-\u9fa5]', text)[0]
                 elif char == 'money':

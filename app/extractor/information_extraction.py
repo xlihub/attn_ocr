@@ -713,6 +713,8 @@ class DataHandle(object):
                             if index == len(numlist) - 1:
                                 num = num.replace('0', '')
                             text += num
+                    elif loc == '/':
+                        text = re.sub(r"[^,\d.]", "", text)
                 elif char == 'M-M':
                     yy = mm = ''
                     if len(text) == 5:

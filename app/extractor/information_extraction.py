@@ -1,3 +1,4 @@
+import app.utils
 from app.extractor.direction_filter_generator import *
 from Levenshtein import *
 from enum import Enum, auto
@@ -689,6 +690,24 @@ class DataHandle(object):
                                     text = text[1:9]
                                 else:
                                     text = text[:8]
+                elif char == 'INV_NO':
+                    if len(text) == 10:
+                        code = text[:2]
+                        no = text[2:]
+                        if not app.utils.is_all_english(code):
+                            code = code.replace('0', 'Q').replace('9', 'Q').replace('2', 'Z').replace('3', 'S').replace('5', 'S')
+                        text = code + no
+                    else:
+                        length = len(text)
+                        no_len = length - 8
+                        code = text[:no_len]
+                        no = text[no_len:]
+                        if app.utils.is_all_english(code):
+                            code = code[:2]
+                        else:
+                            code = code.replace('0', 'Q').replace('9', 'Q').replace('2', 'Z').replace('3', 'S').replace(
+                                '5', 'S').replace('1', '')
+                        text = code + no
                 elif char == 'site':
                     text = text.replace('合北', '台北').replace('合南', '台南').replace('合中', '台中')
                 elif char == 'chinese':
@@ -714,7 +733,16 @@ class DataHandle(object):
                                 num = num.replace('0', '')
                             text += num
                     elif loc == '/':
+                        if app.utils.is_contains_english(text):
+                            text = text.replace('o', '0').replace('I', '1').replace('O', '0').replace('Z', '2')
                         text = re.sub(r"[^,\d.]", "", text)
+                        numlist = re.split('\.|,|。|，', text)
+                        text = ''
+                        for index, num in enumerate(numlist):
+                            if index == len(numlist) - 1:
+                                if len(num) == 2 or len(num) == 4:
+                                    num = num.replace('00', '')
+                            text += num
                 elif char == 'M-M':
                     yy = mm = ''
                     if len(text) == 5:

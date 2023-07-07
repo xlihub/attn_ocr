@@ -21,11 +21,12 @@ import re
 
 app = FastAPI()
 
-Template_Type = ['invoice_A4', 'invoice_A5']
+Template_Type = ['invoice_A4', 'invoice_A5','Impo_tw']
 
 Template_Distance = {
     'invoice_A4': 0.05,
     'invoice_A5': 0.1,
+    'Impo_tw': 0.05,
 }
 
 checked_text_boxes = {}
@@ -224,7 +225,9 @@ def predict(item: PaddleItem):
             # print('template')
             # print(template)
             if template:
-                S_UNINO = predict_result['S_UNINO']
+                checked_text_boxes.clear()
+                if im_type in ['invoice_A4', 'invoice_A5']:
+                    S_UNINO = predict_result['S_UNINO']
                 f_result = find_result_from_template(predict_result, new_text_list, new_boxes_list, new_score_list,
                                                      mask_dict, template, ocr_handle, text_boxes_list, im_type)
                 ocr_handle.check_symbol = []
@@ -251,7 +254,8 @@ def predict(item: PaddleItem):
                             predict_result[item['field']] = text[1:]
                             # print(text[1:])
                 # print(f_result)
-                predict_result['S_UNINO'] = S_UNINO
+                if im_type in ['invoice_A4', 'invoice_A5']:
+                    predict_result['S_UNINO'] = S_UNINO
             extra = get_extra()[im_type]
             if extra is None:
                 extra = {}
@@ -579,11 +583,18 @@ def get_template_info(im_type, result):
             'Accept': 'application/json',
         }
         url = 'http://0.0.0.0:3008/api/templateInfo'
-        query = {
-            'type': im_type,
-            'no': result['S_UNINO'],
-            'name': ''
-        }
+        if im_type in ['invoice_A4', 'invoice_A5']:
+            query = {
+                'type': im_type,
+                'no': result['S_UNINO'],
+                'name': ''
+            }
+        else:
+            query = {
+                'type': im_type,
+                'no': get_impo_info(result),
+                'name': ''
+            }
         client = httpx.Client(verify=False)
         try:
             response = client.get(url, params=query, headers=headers)
@@ -601,6 +612,26 @@ def get_template_info(im_type, result):
             client.close()
     else:
         return False
+
+
+def get_impo_info(result):
+    title = result['__海關進口貨物稅']
+    m2 = StringMatcher(title, '海關進口貨物稅費繳納證兼匯款申請書(N5110)')
+    r = m2.ratio()
+    if r > 0.9:
+        return 'Impo_1'
+    else:
+        m2 = StringMatcher(title, '海關進口貨物稅費繳納證(N5110)')
+        r = m2.ratio()
+        if r > 0.9:
+            return 'Impo_2'
+        else:
+            m2 = StringMatcher(title, '海關進口快遞貨物稅費繳納證明')
+            r = m2.ratio()
+            if r > 0.9:
+                return 'Impo_3'
+            else:
+                return title
 
 
 def pb2dict(obj):

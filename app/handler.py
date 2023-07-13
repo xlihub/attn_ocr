@@ -393,7 +393,7 @@ def checkdata(im_type, im_dict):
     return im_dict
 
 
-def check_extradata(im_type, ext_dict):
+def check_extradata(im_type, ext_dict, results):
     if im_type == 'invoice_ey':
         if 'INV_NO2' in ext_dict:
             result = ext_dict['INV_NO2']
@@ -423,6 +423,18 @@ def check_extradata(im_type, ext_dict):
             ext_dict['MM'] = check_yymm(text, True)
         else:
             ext_dict['MM'] = ''
+    if im_type == 'Impo_tw':
+        if 'IMPO_INV_NO' in ext_dict:
+            inv_no = results['INV_NO']
+            if len(inv_no) != 14:
+                if len(inv_no) == 13:
+                    result = ext_dict['IMPO_INV_NO'][:3] + inv_no[-11:]
+                else:
+                    result = ext_dict['IMPO_INV_NO']
+                ext_dict['IMPO_INV_NO'] = result
+                results['INV_NO'] = result
+        else:
+            ext_dict['IMPO_INV_NO'] = ''
     return ext_dict
 
 
@@ -538,7 +550,6 @@ class PaddleMutiOutputParser(object):
             for i in range(len(self.predicts)):
                 self.fp_dict = {}
                 self.fp_dict['InvoiceType'] = self.predicts[i]['im_type']
-                self.fp_dict['InvoiceExtra'] = check_extradata(self.predicts[i]['im_type'], self.predicts[i]['extra'])
                 self.fp_dict['RequestId'] = self._decode()
                 self.fp_dict['Code'] = self.code
                 self.fp_dict['Message'] = 'Success' if self.code == '200' else 'Error'
@@ -554,6 +565,7 @@ class PaddleMutiOutputParser(object):
                                                                   not k.startswith('__')})
                 else:
                     self.fp_dict["InvoiceInfos"] = []
+                self.fp_dict['InvoiceExtra'] = check_extradata(self.predicts[i]['im_type'], self.predicts[i]['extra'], self.fp_dict["InvoiceInfos"])
                 self.response.append(self.fp_dict)
         """
         else:

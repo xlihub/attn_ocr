@@ -691,23 +691,32 @@ class DataHandle(object):
                                 else:
                                     text = text[:8]
                 elif char == 'INV_NO':
-                    if len(text) == 10:
-                        code = text[:2]
-                        no = text[2:]
-                        if not app.utils.is_all_english(code):
-                            code = code.replace('0', 'Q').replace('9', 'Q').replace('2', 'Z').replace('3', 'S').replace('5', 'S')
-                        text = code + no
+                    if loc == 'Impo':
+                        if len(text) == 14:
+                            code = text[:3]
+                            no = text[3:]
+                            if not app.utils.is_all_english(code):
+                                code = code.replace('1', 'I').replace('4', 'A').replace('0', 'Q').replace('9', 'Q').replace('2', 'Z').replace('3', 'S').replace(
+                                    '5', 'S')
+                            text = code + no
                     else:
-                        length = len(text)
-                        no_len = length - 8
-                        code = text[:no_len]
-                        no = text[no_len:]
-                        if app.utils.is_all_english(code):
-                            code = code[:2]
+                        if len(text) == 10:
+                            code = text[:2]
+                            no = text[2:]
+                            if not app.utils.is_all_english(code):
+                                code = code.replace('0', 'Q').replace('9', 'Q').replace('2', 'Z').replace('3', 'S').replace('5', 'S')
+                            text = code + no
                         else:
-                            code = code.replace('0', 'Q').replace('9', 'Q').replace('2', 'Z').replace('3', 'S').replace(
-                                '5', 'S').replace('1', '')
-                        text = code + no
+                            length = len(text)
+                            no_len = length - 8
+                            code = text[:no_len]
+                            no = text[no_len:]
+                            if app.utils.is_all_english(code):
+                                code = code[:2]
+                            else:
+                                code = code.replace('0', 'Q').replace('9', 'Q').replace('2', 'Z').replace('3', 'S').replace(
+                                    '5', 'S').replace('1', '')
+                            text = code + no
                 elif char == 'site':
                     text = text.replace('合北', '台北').replace('合南', '台南').replace('合中', '台中')
                 elif char == 'chinese':

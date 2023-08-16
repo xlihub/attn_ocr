@@ -468,6 +468,7 @@ def prepare_result(result, text_list, boxes_list, score_list, template_list, ocr
         result_dic['text'] = text
         result_dic['field'] = data_field[key]
         if not key.startswith("__"):
+
             siamese_threshold = 0.6
             siamese_text_list = {i: textbox for i, textbox in enumerate(text_boxes_list) if
                                  data_field[key].siamese_ratio(textbox) > siamese_threshold}

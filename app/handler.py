@@ -16,6 +16,7 @@ import hmac
 import app.crop_image as crop
 import app.maskrcnn_detect as maskrcnn_detect
 from app.maskrcnn_predict import unmold_detections
+import app.utils
 import app.maskrcnn_utils as rcnn_utils
 
 # import matplotlib.pyplot as plt
@@ -433,6 +434,10 @@ def check_extradata(im_type, ext_dict, results):
                     result = ext_dict['IMPO_INV_NO']
                 ext_dict['IMPO_INV_NO'] = result
                 results['INV_NO'] = result
+            else:
+                code = inv_no[:3]
+                if not app.utils.is_all_english(code):
+                    results['INV_NO'] = ext_dict['IMPO_INV_NO']
         else:
             ext_dict['IMPO_INV_NO'] = ''
     return ext_dict

@@ -695,9 +695,9 @@ class DataHandle(object):
                         if len(text) == 14:
                             code = text[:3]
                             no = text[3:]
-                            if not app.utils.is_all_english(code):
-                                code = code.replace('1', 'I').replace('4', 'A').replace('0', 'Q').replace('9', 'Q').replace('2', 'Z').replace('3', 'S').replace(
-                                    '5', 'S')
+                            # if not app.utils.is_all_english(code):
+                            #     code = code.replace('1', 'I').replace('4', 'A').replace('0', 'Q').replace('9', 'Q').replace('2', 'Z').replace('3', 'S').replace(
+                            #         '5', 'S')
                             text = code + no
                     else:
                         if len(text) == 10:

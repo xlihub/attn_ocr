@@ -733,13 +733,18 @@ class DataHandle(object):
                             text = re.findall('[\u4e00-\u9fa5]', text)[0]
                 elif char == 'money':
                     if loc == 'int':
+                        text = re.sub(r"[^,\d.]", "", text)
                         text = text.replace('.', '').replace(',', '')
                     elif loc == 'float':
+                        text = re.sub(r"[^,\d.]", "", text)
                         numlist = re.split('\.|,|。|，', text)
                         text = ''
                         for index, num in enumerate(numlist):
                             if index == len(numlist) - 1:
-                                num = num.replace('0', '')
+                                if num in ['0', '00']:
+                                    num = num.replace('0', '')
+                                else:
+                                    num = '.' + num
                             text += num
                     elif loc == '/':
                         if app.utils.is_contains_english(text):

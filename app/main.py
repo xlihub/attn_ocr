@@ -66,6 +66,103 @@ def decode_qrcode(item: PaddleItem):
     return {"result": result}
 
 
+#  base 64 编码格式
+def encode_image(image_path):
+    import base64
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
+
+
+@app.post("/qwen_llm")
+def decode_from_qwen_llm(item: PaddleItem):
+    import requests
+    import json
+    question = ''
+    if item.image_type == 'invoice_sk':
+        question = "圖片中的發票日期，銷售額合計，營業稅，總計分別是多少?發票日期在圖片中的格式是：中華民國xxx年xx月xx日，你要用json的形式返回，發票日期是INV_DD，銷售額合計是AMTN_NET，營業稅是TAX，總計是AMTN"
+    api_key = "sk-bd8b4e48b6cd4f05bd6095b33fa384f0"
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
+    payload = {
+        "model": "qwen-vl-max",
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"{item.ImageBase64}"},
+                    },
+                    {"type": "text", "text": f"{question}"},
+                ],
+            }
+        ],
+    }
+    response = requests.post(
+        "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+        headers=headers,
+        json=payload,
+    )
+    result = response.json()["choices"][0]["message"]["content"]
+    # 解析模型的输出
+    match = re.search(
+        r"\{.*\}", result.strip(), re.MULTILINE | re.IGNORECASE | re.DOTALL
+    )
+    json_str = ""
+    if match:
+        json_str = match.group()
+    json_object = json.loads(json_str, strict=False)
+    # print(json_object)
+    # print(result)
+    return {"result": json_object}
+
+
+@app.post("/gemini_llm")
+def decode_from_gemini_llm(item: PaddleItem):
+    import requests
+    import json
+    question = ''
+    if item.image_type == 'invoice_sk':
+        question = "圖片中的發票日期，銷售額合計，營業稅，總計分別是多少?發票日期在圖片中的格式是：中華民國xxx年xx月xx日，你要用json的形式返回，發票日期是INV_DD，銷售額合計是AMTN_NET，營業稅是TAX，總計是AMTN"
+    api_key = "AIzaSyB-M43hixwE2yc_G6Yd0bJUA3hya_5qhsc"
+    url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
+    headers = {'Content-Type': 'application/json'}
+    data = {
+        'contents': [
+            {
+                'parts': [
+                    {
+                        'text': f"{question}"
+                    },
+                    {
+                        "inline_data": {
+                            "mime_type": "image/jpeg",
+                            "data": f"{item.ImageBase64.split(',')[1]}"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+    response = requests.post(
+        url,
+        headers=headers,
+        json=data,
+    )
+    result = response.json()['candidates'][0]['content']['parts'][0]['text']
+    # print(result)
+    # 解析模型的输出
+    match = re.search(
+        r"\{.*\}", result.strip(), re.MULTILINE | re.IGNORECASE | re.DOTALL
+    )
+    json_str = ""
+    if match:
+        json_str = match.group()
+    json_object = json.loads(json_str, strict=False)
+    # print(json_object)
+    # print(result)
+    return {"result": json_object}
+
+
 @debug
 @app.post('/predict')
 def predict(item: PaddleItem):
@@ -92,12 +189,13 @@ def predict(item: PaddleItem):
             extra_results = []
             for index, preb_dict in enumerate(res):
                 if preb_dict['im_type'] == 'extra':
+                    score_list = ast.literal_eval(preb_dict['score'])
                     main_pred = results[-1]
                     text_list = ast.literal_eval(preb_dict['text'])
                     # for text in text_list:
                     #     extra_text += text
                     ext_key = preb_dict['ext_key']
-                    extra_text = prepare_extra_text(text_list, ext_key, im_type)
+                    extra_text = prepare_extra_text(text_list, ext_key, im_type, main_pred, score_list)
                     main_pred['extra'][ext_key] = extra_text
                     results[-1] = main_pred
                 else:
@@ -365,7 +463,7 @@ def predict(item: PaddleItem):
 #     predicts = engine.predict(item)
 #     output_parser = TxOutputParser(item, *predicts)
 #     return output_parser.parse_output(item.InvoiceType)
-def prepare_extra_text(text_list, ext_key, im_type):
+def prepare_extra_text(text_list, ext_key, im_type, main_pred, score_list):
     ext_text = ''
     if im_type == 'invoice_sy':
         if ext_key == 'SY_NO1':
@@ -401,6 +499,60 @@ def prepare_extra_text(text_list, ext_key, im_type):
                     break
                 else:
                     continue
+        elif ext_key == 'AMTN':
+            digit_text = []
+            score_text = []
+            for index, text in enumerate(text_list):
+                text = text.replace(',', '').replace('，', '').replace('$', '')
+                if text.isdigit():
+                    digit_text.append(text)
+                    score_text.append(score_list[index])
+            # digit_text = [text for text in text_list if text.isdigit()]
+            if len(digit_text) > 3:
+                if int(digit_text[0]) + int(digit_text[1]) == int(digit_text[2]):
+                    main_pred['extra']['AMTN_NET'] = digit_text[0]
+                    main_pred['extra']['TAX'] = digit_text[1]
+                    ext_text = digit_text[2]
+                elif int(digit_text[1]) + int(digit_text[2]) == int(digit_text[3]):
+                    main_pred['extra']['AMTN_NET'] = digit_text[1]
+                    main_pred['extra']['TAX'] = digit_text[2]
+                    ext_text = digit_text[3]
+                else:
+                    main_pred['extra']['AMTN_NET'] = digit_text[0]
+                    main_pred['extra']['TAX'] = digit_text[1]
+                    ext_text = digit_text[2]
+            elif len(digit_text) == 3:
+                amtn_net, tax, amtn = check_sk_amtn(digit_text, score_text)
+                main_pred['extra']['AMTN_NET'] = int(amtn_net)
+                main_pred['extra']['TAX'] = int(tax)
+                ext_text = int(amtn)
+            elif 3 > len(digit_text) > 0:
+                main_pred['extra']['AMTN_NET'] = digit_text[0]
+                if len(digit_text) == 2:
+                    main_pred['extra']['TAX'] = digit_text[1]
+                else:
+                    main_pred['extra']['TAX'] = ''
+                ext_text = ''
+            else:
+                main_pred['extra']['AMTN_NET'] = ''
+                main_pred['extra']['TAX'] = ''
+                ext_text = ''
+        elif ext_key == 'MMDD':
+            text = ''.join(text_list)
+            num_list = re.findall(r"\d+?\d*", text)
+            MMDD = []
+            for num in num_list:
+                if int(num) > 100:
+                    continue
+                else:
+                    MMDD.append(num)
+            ext_text = '-'.join(MMDD)
+        elif ext_key == 'UNINO':
+            text = ''.join(text_list)
+            num_list = re.findall(r"\d+?\d*", text)
+            ext_text = ''.join(num_list)
+            if len(ext_text) > 8:
+                ext_text = ext_text[:8]
         else:
             for text in text_list:
                 ext_text += text
@@ -414,6 +566,124 @@ def prepare_extra_text(text_list, ext_key, im_type):
         for text in text_list:
             ext_text += text
     return ext_text
+
+
+def check_sk_amtn(text_list, score_list):
+    amtn_list = [0, 0, 0]
+    check_list = []
+    if len(score_list) == 3:
+        for index, score in enumerate(score_list):
+            if all(score_key > 0.75 for score_key in score):
+                if int(text_list[index]) == 0:
+                    check_list.append(False)
+                else:
+                    check_list.append(True)
+                    amtn_list[index] = text_list[index]
+            else:
+                check_list.append(False)
+        if all(check_key for check_key in check_list):
+            amtn_net = text_list[0]
+            tax = text_list[1]
+            amtn = text_list[2]
+            return amtn_net, tax, amtn
+        elif all(not check_key for check_key in check_list):
+            amtn_net = text_list[0]
+            tax = text_list[1]
+            amtn = text_list[2]
+            return amtn_net, tax, amtn
+        else:
+            amtn_net = int(amtn_list[0])
+            tax = int(amtn_list[1])
+            amtn = int(amtn_list[2])
+            if amtn_list.count(0) == 2:
+                if not amtn_net == 0:
+                    tax = amtn_net * 0.05
+                    if tax - int(tax) == 0:
+                        amtn = amtn_net + tax
+                        return amtn_net, tax, amtn
+                    else:
+                        return text_list[0], text_list[1], text_list[2]
+                if not tax == 0:
+                    amtn_net = tax / 0.05
+                    if amtn_net - int(amtn_net) == 0:
+                        amtn = amtn_net + tax
+                        return amtn_net, tax, amtn
+                    else:
+                        return text_list[0], text_list[1], text_list[2]
+                if not amtn == 0:
+                    amtn_net = amtn / 1.05
+                    if amtn_net - int(amtn_net) == 0:
+                        tax = amtn - amtn_net
+                        return amtn_net, tax, amtn
+                    else:
+                        return text_list[0], text_list[1], text_list[2]
+            if amtn_list.count(0) == 1:
+                if amtn_net == 0:
+                    if amtn / tax == 21.0:
+                        amtn_net = amtn - tax
+                        return amtn_net, tax, amtn
+                    else:
+                        temp_amtn_net = tax / 0.05
+                        if temp_amtn_net - int(temp_amtn_net) == 0:
+                            if len(str(int(temp_amtn_net))) == len(str(amtn_net)):
+                                amtn = temp_amtn_net + tax
+                                return temp_amtn_net, tax, amtn
+                            else:
+                                return text_list[0], text_list[1], text_list[2]
+                        else:
+                            temp_amtn_net = amtn / 1.05
+                            if temp_amtn_net - int(temp_amtn_net) == 0:
+                                if len(str(int(temp_amtn_net))) == len(str(amtn_net)):
+                                    tax = amtn - temp_amtn_net
+                                    return temp_amtn_net, tax, amtn
+                                else:
+                                    return text_list[0], text_list[1], text_list[2]
+                            else:
+                                return text_list[0], text_list[1], text_list[2]
+                if tax == 0:
+                    if amtn / amtn_net == 1.05:
+                        tax = amtn - amtn_net
+                        return amtn_net, tax, amtn
+                    else:
+                        temp_tax = amtn_net * 0.05
+                        if temp_tax - int(temp_tax) == 0:
+                            if len(str(int(temp_tax))) == len(str(tax)):
+                                amtn = amtn_net + temp_tax
+                                return amtn_net, temp_tax, amtn
+                            else:
+                                return text_list[0], text_list[1], text_list[2]
+                        else:
+                            temp_tax = amtn / 21
+                            if temp_tax - int(temp_tax) == 0:
+                                if len(str(int(temp_tax))) == len(str(tax)):
+                                    amtn_net = amtn - temp_tax
+                                    return amtn_net, temp_tax, amtn
+                                else:
+                                    return text_list[0], text_list[1], text_list[2]
+                            else:
+                                return text_list[0], text_list[1], text_list[2]
+                if amtn == 0:
+                    if tax / amtn_net == 0.05:
+                        amtn = amtn_net + tax
+                        return amtn_net, tax, amtn
+                    else:
+                        temp_tax = amtn_net * 0.05
+                        if temp_tax - int(temp_tax) == 0:
+                            if len(str(int(temp_tax))) == len(str(tax)):
+                                amtn = amtn_net + temp_tax
+                                return amtn_net, temp_tax, amtn
+                            else:
+                                return text_list[0], text_list[1], text_list[2]
+                        else:
+                            temp_amtn_net = tax / 0.05
+                            if temp_amtn_net - int(temp_amtn_net) == 0:
+                                if len(str(int(temp_amtn_net))) == len(str(amtn_net)):
+                                    amtn = temp_amtn_net + tax
+                                    return temp_amtn_net, tax, amtn
+                                else:
+                                    return text_list[0], text_list[1], text_list[2]
+                            else:
+                                return text_list[0], text_list[1], text_list[2]
 
 
 def find_result_from_template(result, text_list, boxes_list, score_list, mask_dict, template, ocr_handle,
